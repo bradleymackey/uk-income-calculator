@@ -34,6 +34,10 @@ export interface TaxRules {
     bands: TaxBand[];
   };
   nationalInsurance: {
+    employerClass1: {
+      secondaryThreshold: number;
+      rate: number;
+    };
     employeeClass1: {
       primaryThreshold: number;
       upperEarningsLimit: number;

@@ -23,6 +23,7 @@ const defaultInput: CalculatorInput = {
     type: 'percentage',
     value: 0,
   },
+  employerNiPassbackPercent: 0,
   sippContribution: 0,
   undergraduatePlan: 'none',
   hasPostgraduateLoan: false,

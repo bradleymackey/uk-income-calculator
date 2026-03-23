@@ -25,6 +25,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
       type: 'percentage',
       value: 0,
     },
+    employerNiPassbackPercent: 0,
     sippContribution: 0,
     undergraduatePlan: 'none',
     hasPostgraduateLoan: false,
@@ -166,6 +167,49 @@ describe('calculateTax', () => {
     expect(result.incomeTax).toBeCloseTo(6986, 2);
     // NI: (47500 - 12570) * 0.08 = 34930 * 0.08 = 2794.40
     expect(result.nationalInsurance).toBeCloseTo(2794.4, 2);
+  });
+
+  it('calculates employer NI savings passback', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        employerNiPassbackPercent: 50,
+      }),
+      rules,
+    );
+
+    // Salary sacrifice = £2,500
+    // Employer NI on £50k: (50000 - 5000) * 0.15 = 6750
+    // Employer NI on £47.5k: (47500 - 5000) * 0.15 = 6375
+    // Employer NI saving = 6750 - 6375 = 375
+    expect(result.employerNiSaving).toBeCloseTo(375, 2);
+    // 50% passback = 187.50
+    expect(result.employerNiPassback).toBeCloseTo(187.5, 2);
+    // Total pension: 2500 (employee) + 0 (employer base) + 187.50 (passback) + 0 (SIPP)
+    expect(result.totalPensionContributions).toBeCloseTo(2687.5, 2);
+  });
+
+  it('has zero NI passback without salary sacrifice', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: false,
+        },
+        employerNiPassbackPercent: 50,
+      }),
+      rules,
+    );
+
+    expect(result.employerNiSaving).toBe(0);
+    expect(result.employerNiPassback).toBe(0);
   });
 
   it('handles non-salary-sacrifice pension', () => {

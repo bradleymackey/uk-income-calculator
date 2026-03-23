@@ -14,6 +14,10 @@
     ]
   },
   "nationalInsurance": {
+    "employerClass1": {
+      "secondaryThreshold": 5000,
+      "rate": 0.15
+    },
     "employeeClass1": {
       "primaryThreshold": 12570,
       "upperEarningsLimit": 50270,

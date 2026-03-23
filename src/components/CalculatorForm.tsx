@@ -112,6 +112,18 @@ export function CalculatorForm({
             />
             Salary sacrifice
           </label>
+          {input.pensionContribution.salarySacrifice && (
+            <InputField
+              label="Employer NI savings passback"
+              value={input.employerNiPassbackPercent || ''}
+              onChange={(v) =>
+                update({ employerNiPassbackPercent: parseFloat(v) || 0 })
+              }
+              suffix="%"
+              min={0}
+              helpText="Percentage of employer's NI savings added to your pension"
+            />
+          )}
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <InputField

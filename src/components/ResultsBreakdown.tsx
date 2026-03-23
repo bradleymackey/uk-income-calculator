@@ -124,6 +124,7 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
       {/* Pension */}
       {(result.pensionContribution > 0 ||
         result.employerPensionContribution > 0 ||
+        result.employerNiPassback > 0 ||
         result.sippContribution > 0) && (
         <section>
           <h3 className="mb-1 text-sm font-semibold text-gray-900">
@@ -140,6 +141,12 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
               <Row
                 label="Employer contribution"
                 value={formatCurrency(result.employerPensionContribution)}
+              />
+            )}
+            {result.employerNiPassback > 0 && (
+              <Row
+                label="Employer NI savings passback"
+                value={formatCurrency(result.employerNiPassback)}
               />
             )}
             {result.sippContribution > 0 && (

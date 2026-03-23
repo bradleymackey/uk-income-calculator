@@ -14,6 +14,7 @@ export interface CalculatorInput {
     type: 'percentage' | 'fixed';
     value: number;
   };
+  employerNiPassbackPercent: number;
   sippContribution: number;
   undergraduatePlan: UndergraduatePlanId;
   hasPostgraduateLoan: boolean;
@@ -35,6 +36,8 @@ export interface CalculationResult {
 
   pensionContribution: number;
   employerPensionContribution: number;
+  employerNiSaving: number;
+  employerNiPassback: number;
   totalPensionContributions: number;
   sippContribution: number;
 
@@ -179,6 +182,24 @@ export function calculateTax(
       ? (grossSalary * input.employerPensionContribution.value) / 100
       : input.employerPensionContribution.value;
 
+  // Calculate employer NI saving from salary sacrifice
+  const employerNi = rules.nationalInsurance.employerClass1;
+  let employerNiSaving = 0;
+  if (input.pensionContribution.salarySacrifice && pensionContribution > 0) {
+    // Employer NI on original salary vs reduced salary
+    const originalNiable = Math.max(
+      0,
+      grossSalary - employerNi.secondaryThreshold,
+    );
+    const reducedNiable = Math.max(
+      0,
+      grossSalary - pensionContribution - employerNi.secondaryThreshold,
+    );
+    employerNiSaving = (originalNiable - reducedNiable) * employerNi.rate;
+  }
+  const employerNiPassback =
+    employerNiSaving * (input.employerNiPassbackPercent / 100);
+
   const sippContribution = input.sippContribution;
 
   // 2. Total gross income
@@ -262,8 +283,13 @@ export function calculateTax(
     totalGrossIncome,
     pensionContribution,
     employerPensionContribution,
+    employerNiSaving,
+    employerNiPassback,
     totalPensionContributions:
-      pensionContribution + employerPensionContribution + sippContribution,
+      pensionContribution +
+      employerPensionContribution +
+      employerNiPassback +
+      sippContribution,
     sippContribution,
     niableIncome,
     adjustedNetIncome,
