@@ -14,6 +14,7 @@ const defaultInput: CalculatorInput = {
   bonus: 0,
   taxableBenefits: 0,
   rsuVests: 0,
+  rsuTaxWithheld: false,
   pensionContribution: {
     type: 'percentage',
     value: 0,

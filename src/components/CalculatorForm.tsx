@@ -66,6 +66,17 @@ export function CalculatorForm({
             onChange={(v) => update({ rsuVests: parseFloat(v) || 0 })}
             prefix="£"
           />
+          {input.rsuVests > 0 && (
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={input.rsuTaxWithheld}
+                onChange={(e) => update({ rsuTaxWithheld: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              Tax withheld on vest (45% tax + 2% NI)
+            </label>
+          )}
         </div>
       </section>
 

@@ -121,6 +121,43 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
         </div>
       </section>
 
+      {/* RSU Withholding */}
+      {result.rsuWithholding && (
+        <section>
+          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+            RSU Tax Withholding
+          </h3>
+          <div className="text-sm">
+            <Row
+              label="Income tax withheld (45%)"
+              value={`-${formatCurrency(result.rsuWithholding.taxWithheld)}`}
+              highlight="red"
+            />
+            <Row
+              label="NI withheld (2%)"
+              value={`-${formatCurrency(result.rsuWithholding.niWithheld)}`}
+              highlight="red"
+            />
+            <Row
+              label="Total withheld"
+              value={`-${formatCurrency(result.rsuWithholding.totalWithheld)}`}
+              bold
+              highlight="red"
+            />
+            <Row
+              label="Net RSU value received"
+              value={formatCurrency(result.rsuWithholding.netRsuValue)}
+              bold
+              highlight="green"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Withholding is a prepayment — any overpayment is refunded via
+            self-assessment
+          </p>
+        </section>
+      )}
+
       {/* Pension */}
       {(result.pensionContribution > 0 ||
         result.employerPensionContribution > 0 ||

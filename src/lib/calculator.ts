@@ -5,6 +5,7 @@ export interface CalculatorInput {
   bonus: number;
   taxableBenefits: number;
   rsuVests: number;
+  rsuTaxWithheld: boolean;
   pensionContribution: {
     type: 'percentage' | 'fixed';
     value: number;
@@ -32,6 +33,12 @@ export interface CalculationResult {
   bonus: number;
   taxableBenefits: number;
   rsuVests: number;
+  rsuWithholding: {
+    taxWithheld: number;
+    niWithheld: number;
+    totalWithheld: number;
+    netRsuValue: number;
+  } | null;
   totalGrossIncome: number;
 
   pensionContribution: number;
@@ -264,7 +271,18 @@ export function calculateTax(
     rules,
   );
 
-  // 11. Total deductions and net pay
+  // 11. RSU withholding
+  const rsuWithholding =
+    input.rsuTaxWithheld && rsuVests > 0
+      ? {
+          taxWithheld: rsuVests * 0.45,
+          niWithheld: rsuVests * 0.02,
+          totalWithheld: rsuVests * 0.47,
+          netRsuValue: rsuVests * 0.53,
+        }
+      : null;
+
+  // 12. Total deductions and net pay
   const totalDeductions =
     incomeTax +
     nationalInsurance +
@@ -280,6 +298,7 @@ export function calculateTax(
     bonus,
     taxableBenefits,
     rsuVests,
+    rsuWithholding,
     totalGrossIncome,
     pensionContribution,
     employerPensionContribution,

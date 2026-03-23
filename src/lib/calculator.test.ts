@@ -16,6 +16,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     bonus: 0,
     taxableBenefits: 0,
     rsuVests: 0,
+    rsuTaxWithheld: false,
     pensionContribution: {
       type: 'percentage',
       value: 0,
@@ -314,6 +315,36 @@ describe('calculateTax', () => {
     expect(result.totalGrossIncome).toBe(50000);
     // Same tax as £50k salary
     expect(result.incomeTax).toBeCloseTo(7486, 2);
+  });
+
+  it('calculates RSU withholding when enabled', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        rsuVests: 10000,
+        rsuTaxWithheld: true,
+      }),
+      rules,
+    );
+
+    expect(result.rsuWithholding).not.toBeNull();
+    expect(result.rsuWithholding!.taxWithheld).toBe(4500); // 45%
+    expect(result.rsuWithholding!.niWithheld).toBe(200); // 2%
+    expect(result.rsuWithholding!.totalWithheld).toBe(4700); // 47%
+    expect(result.rsuWithholding!.netRsuValue).toBe(5300); // 53%
+  });
+
+  it('returns null RSU withholding when disabled', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        rsuVests: 10000,
+        rsuTaxWithheld: false,
+      }),
+      rules,
+    );
+
+    expect(result.rsuWithholding).toBeNull();
   });
 
   it('handles RSU vests', () => {
