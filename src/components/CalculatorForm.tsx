@@ -96,11 +96,11 @@ export function CalculatorForm({ input, onChange }: CalculatorFormProps) {
             Salary sacrifice
           </label>
           <InputField
-            label="SIPP contribution (annual)"
+            label="SIPP contribution (gross annual)"
             value={input.sippContribution || ''}
             onChange={(v) => update({ sippContribution: parseFloat(v) || 0 })}
             prefix="£"
-            helpText="Personal pension contributions (relief at source)"
+            helpText="Enter the gross amount. You pay 80% — your provider claims 20% basic rate relief from HMRC."
           />
         </div>
       </section>

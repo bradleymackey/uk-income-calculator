@@ -208,6 +208,55 @@ describe('calculateTax', () => {
     expect(result.nationalInsurance).toBeCloseTo(2994.4, 2);
   });
 
+  it('calculates SIPP relief for basic rate taxpayer', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        sippContribution: 5000,
+      }),
+      rules,
+    );
+
+    // Basic rate only — all relief is at source
+    expect(result.sippRelief.grossContribution).toBe(5000);
+    expect(result.sippRelief.basicRateRelief).toBe(1000); // 20%
+    expect(result.sippRelief.selfAssessmentRelief).toBe(0);
+    expect(result.sippRelief.totalRelief).toBe(1000);
+    expect(result.sippRelief.effectiveCost).toBe(4000);
+  });
+
+  it('calculates SIPP relief for higher rate taxpayer', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 80000,
+        sippContribution: 10000,
+      }),
+      rules,
+    );
+
+    // £80k salary, £10k SIPP → adjusted net income = £70k
+    // Without SIPP: taxable = 80000 - 12570 = 67430
+    //   Tax = 37700*0.20 + 29730*0.40 = 7540 + 11892 = 19432
+    // With SIPP: taxable = 70000 - 12570 = 57430
+    //   Tax = 37700*0.20 + 19730*0.40 = 7540 + 7892 = 15432
+    // Total relief = 19432 - 15432 = 4000
+    expect(result.sippRelief.grossContribution).toBe(10000);
+    expect(result.sippRelief.basicRateRelief).toBe(2000); // 20%
+    expect(result.sippRelief.selfAssessmentRelief).toBeCloseTo(2000, 2); // extra 20%
+    expect(result.sippRelief.totalRelief).toBeCloseTo(4000, 2);
+    expect(result.sippRelief.effectiveCost).toBeCloseTo(6000, 2);
+  });
+
+  it('calculates SIPP relief with zero contribution', () => {
+    const result = calculateTax(makeInput({ grossSalary: 50000 }), rules);
+
+    expect(result.sippRelief.grossContribution).toBe(0);
+    expect(result.sippRelief.basicRateRelief).toBe(0);
+    expect(result.sippRelief.selfAssessmentRelief).toBe(0);
+    expect(result.sippRelief.totalRelief).toBe(0);
+    expect(result.sippRelief.effectiveCost).toBe(0);
+  });
+
   it('handles bonus income', () => {
     const result = calculateTax(
       makeInput({

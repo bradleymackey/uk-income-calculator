@@ -135,10 +135,57 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
               />
             )}
             {result.sippContribution > 0 && (
-              <Row
-                label="SIPP"
-                value={`-${formatCurrency(result.sippContribution)}`}
-              />
+              <>
+                <Row
+                  label="SIPP (gross contribution)"
+                  value={`-${formatCurrency(result.sippContribution)}`}
+                />
+                <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="mb-1.5 text-xs font-semibold text-emerald-800">
+                    SIPP Tax Relief
+                  </p>
+                  <Row
+                    label="Basic rate relief at source (20%)"
+                    value={formatCurrency(result.sippRelief.basicRateRelief)}
+                    highlight="green"
+                  />
+                  <p className="mt-0.5 text-xs text-emerald-700">
+                    Claimed by your provider — you only pay{' '}
+                    {formatCurrency(
+                      result.sippRelief.grossContribution -
+                        result.sippRelief.basicRateRelief,
+                    )}
+                  </p>
+                  {result.sippRelief.selfAssessmentRelief > 0 && (
+                    <>
+                      <div className="my-1.5 border-t border-emerald-200" />
+                      <Row
+                        label="Additional relief via self-assessment"
+                        value={formatCurrency(
+                          result.sippRelief.selfAssessmentRelief,
+                        )}
+                        highlight="green"
+                      />
+                      <p className="mt-0.5 text-xs text-emerald-700">
+                        Claim on your tax return as a higher/additional rate
+                        taxpayer
+                      </p>
+                    </>
+                  )}
+                  <div className="my-1.5 border-t border-emerald-200" />
+                  <Row
+                    label="Total tax relief"
+                    value={formatCurrency(result.sippRelief.totalRelief)}
+                    bold
+                    highlight="green"
+                  />
+                  <Row
+                    label="Effective cost to you"
+                    value={formatCurrency(result.sippRelief.effectiveCost)}
+                    bold
+                  />
+                </div>
+              </>
             )}
           </div>
         </section>

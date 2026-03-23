@@ -44,6 +44,14 @@ export interface CalculationResult {
 
   studentLoanRepayment: number;
 
+  sippRelief: {
+    grossContribution: number;
+    basicRateRelief: number;
+    selfAssessmentRelief: number;
+    totalRelief: number;
+    effectiveCost: number;
+  };
+
   totalDeductions: number;
   netAnnualPay: number;
   netMonthlyPay: number;
@@ -92,6 +100,58 @@ export function calculateStudentLoan(
   const planRules = rules.studentLoans[plan];
   if (!planRules) return 0;
   return Math.max(0, (income - planRules.threshold) * planRules.rate);
+}
+
+export function calculateSippRelief(
+  sippContribution: number,
+  incomeBeforeSipp: number,
+  rules: TaxRules,
+): CalculationResult['sippRelief'] {
+  if (sippContribution <= 0) {
+    return {
+      grossContribution: 0,
+      basicRateRelief: 0,
+      selfAssessmentRelief: 0,
+      totalRelief: 0,
+      effectiveCost: 0,
+    };
+  }
+
+  // Basic rate relief is always 20% — claimed at source by the provider
+  const basicRateRelief = sippContribution * 0.2;
+
+  // Calculate tax with and without SIPP to find total relief
+  const paWithSipp = calculatePersonalAllowance(
+    incomeBeforeSipp - sippContribution,
+    rules,
+  );
+  const paWithout = calculatePersonalAllowance(incomeBeforeSipp, rules);
+
+  const taxableWithSipp = Math.max(
+    0,
+    incomeBeforeSipp - sippContribution - paWithSipp,
+  );
+  const taxableWithout = Math.max(0, incomeBeforeSipp - paWithout);
+
+  const taxWithSipp = calculateBandedTax(
+    taxableWithSipp,
+    rules.incomeTax.bands,
+  ).reduce((sum, b) => sum + b.tax, 0);
+  const taxWithout = calculateBandedTax(
+    taxableWithout,
+    rules.incomeTax.bands,
+  ).reduce((sum, b) => sum + b.tax, 0);
+
+  const totalRelief = taxWithout - taxWithSipp;
+  const selfAssessmentRelief = Math.max(0, totalRelief - basicRateRelief);
+
+  return {
+    grossContribution: sippContribution,
+    basicRateRelief,
+    selfAssessmentRelief,
+    totalRelief,
+    effectiveCost: sippContribution - totalRelief,
+  };
 }
 
 export function calculateTax(
@@ -155,7 +215,14 @@ export function calculateTax(
     rules,
   );
 
-  // 10. Total deductions and net pay
+  // 10. SIPP relief breakdown
+  const sippRelief = calculateSippRelief(
+    sippContribution,
+    totalGrossIncome - salarySacrificeDeduction,
+    rules,
+  );
+
+  // 11. Total deductions and net pay
   const totalDeductions =
     incomeTax +
     nationalInsurance +
@@ -183,6 +250,7 @@ export function calculateTax(
     niBands,
     nationalInsurance,
     studentLoanRepayment,
+    sippRelief,
     totalDeductions,
     netAnnualPay,
     netMonthlyPay,
