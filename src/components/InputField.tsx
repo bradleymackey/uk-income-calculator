@@ -1,3 +1,5 @@
+import { Tooltip } from './Tooltip';
+
 interface InputFieldProps {
   label: string;
   value: number | string;
@@ -5,7 +7,7 @@ interface InputFieldProps {
   type?: 'number' | 'text';
   prefix?: string;
   suffix?: string;
-  helpText?: string;
+  tooltip?: string;
   min?: number;
   step?: string;
 }
@@ -17,13 +19,30 @@ export function InputField({
   type = 'number',
   prefix,
   suffix,
-  helpText,
+  tooltip,
   min = 0,
   step = 'any',
 }: InputFieldProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+        {label}
+        {tooltip && (
+          <Tooltip content={tooltip}>
+            <svg
+              className="h-3.5 w-3.5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+            </svg>
+          </Tooltip>
+        )}
+      </label>
       <div className="relative mt-1">
         {prefix && (
           <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
@@ -46,7 +65,6 @@ export function InputField({
           </span>
         )}
       </div>
-      {helpText && <p className="mt-1 text-xs text-gray-500">{helpText}</p>}
     </div>
   );
 }

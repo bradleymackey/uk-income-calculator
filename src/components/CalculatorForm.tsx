@@ -2,6 +2,7 @@ import type { CalculatorInput } from '~/lib/calculator';
 import type { TaxRules, UndergraduatePlanId } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
+import { Tooltip } from './Tooltip';
 
 interface CalculatorFormProps {
   input: CalculatorInput;
@@ -46,25 +47,28 @@ export function CalculatorForm({
             value={input.grossSalary || ''}
             onChange={(v) => update({ grossSalary: parseFloat(v) || 0 })}
             prefix="£"
+            tooltip="Your total annual salary before any deductions, as stated in your employment contract."
           />
           <InputField
             label="Annual bonus"
             value={input.bonus || ''}
             onChange={(v) => update({ bonus: parseFloat(v) || 0 })}
             prefix="£"
+            tooltip="Total expected bonus for the tax year. Taxed as regular income via PAYE."
           />
           <InputField
             label="Taxable benefits (BIK)"
             value={input.taxableBenefits || ''}
             onChange={(v) => update({ taxableBenefits: parseFloat(v) || 0 })}
             prefix="£"
-            helpText="Company car, health insurance, etc."
+            tooltip="Benefits in kind such as company car, private medical insurance, or gym membership. These increase your tax but are not cash income. Check your P11D for the value."
           />
           <InputField
             label="RSU vests (annual value)"
             value={input.rsuVests || ''}
             onChange={(v) => update({ rsuVests: parseFloat(v) || 0 })}
             prefix="£"
+            tooltip="Total value of Restricted Stock Units vesting this tax year. Taxed as employment income on the vesting date."
           />
           {input.rsuVests > 0 && (
             <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -75,6 +79,19 @@ export function CalculatorForm({
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               Tax withheld on vest (45% tax + 2% NI)
+              <Tooltip content="Your employer sells shares at vest to cover tax. The standard withholding rate is 45% income tax + 2% NI. Any overpayment is refunded via self-assessment.">
+                <svg
+                  className="h-3.5 w-3.5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+                </svg>
+              </Tooltip>
             </label>
           )}
         </div>
@@ -97,6 +114,7 @@ export function CalculatorForm({
                     ? '%'
                     : undefined
                 }
+                tooltip="Your employee pension contribution. If percentage, calculated on gross salary only."
               />
             </div>
             <select
@@ -122,6 +140,19 @@ export function CalculatorForm({
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             Salary sacrifice
+            <Tooltip content="Your gross salary is reduced by the pension amount before tax and NI are calculated, saving both income tax and National Insurance.">
+              <svg
+                className="h-3.5 w-3.5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+              </svg>
+            </Tooltip>
           </label>
           {input.pensionContribution.salarySacrifice && (
             <InputField
@@ -132,7 +163,7 @@ export function CalculatorForm({
               }
               suffix="%"
               min={0}
-              helpText="Percentage of employer's NI savings added to your pension"
+              tooltip="When you salary sacrifice, your employer also saves on NI. Some employers pass a percentage of this saving into your pension."
             />
           )}
           <div className="flex items-end gap-3">
@@ -153,7 +184,7 @@ export function CalculatorForm({
                     ? '%'
                     : undefined
                 }
-                helpText="Does not affect your take-home pay"
+                tooltip="Your employer's pension contribution. Does not affect your take-home pay but is shown in the pension total."
               />
             </div>
             <select
@@ -163,7 +194,7 @@ export function CalculatorForm({
                   type: e.target.value as 'percentage' | 'fixed',
                 })
               }
-              className="mb-[22px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="mb-[1px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             >
               <option value="percentage">%</option>
               <option value="fixed">£</option>
@@ -174,7 +205,7 @@ export function CalculatorForm({
             value={input.sippContribution || ''}
             onChange={(v) => update({ sippContribution: parseFloat(v) || 0 })}
             prefix="£"
-            helpText="Enter the gross amount. You pay 80% — your provider claims 20% basic rate relief from HMRC."
+            tooltip="Enter the gross amount you want to contribute. You pay 80% and your provider claims 20% basic rate relief from HMRC. Higher/additional rate relief is claimed via self-assessment."
           />
         </div>
       </section>
