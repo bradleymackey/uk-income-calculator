@@ -45,15 +45,15 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="ml-auto flex h-5 w-5 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+      className="flex h-5 w-5 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600"
       title="Remove"
     >
       <svg
-        className="h-3.5 w-3.5"
+        className="h-3 w-3"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
-        strokeWidth={2}
+        strokeWidth={2.5}
       >
         <path d="M18 12H6" />
       </svg>
@@ -69,7 +69,7 @@ function FieldHeader({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-1.5">
       <span className="text-xs font-medium text-gray-500">{label}</span>
       <RemoveButton onClick={onRemove} />
     </div>
@@ -374,7 +374,7 @@ export function CalculatorForm({
 
       {isVisible('studentLoan') && (
         <section className="py-5 first:pt-0 last:pb-0">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-gray-900">
               Student Loan
             </h2>
