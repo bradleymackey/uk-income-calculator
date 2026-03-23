@@ -75,6 +75,9 @@ export interface CalculationResult {
   netAnnualPay: number;
   netMonthlyPay: number;
   payeMonthlyPay: number | null;
+  payeMonthlyWithRsu: number | null;
+  effectiveRate: number;
+  marginalRate: number;
 }
 
 export function calculatePersonalAllowance(
@@ -337,6 +340,40 @@ export function calculateTax(
     payeMonthlyPay = payeAnnual / 12;
   }
 
+  // Monthly payslip during an RSU vest period: full tax (inc RSUs) via PAYE,
+  // minus the RSU net that goes to brokerage. This is what PAYE looks like
+  // in the month RSUs vest and tax is adjusted.
+  const payeMonthlyWithRsu =
+    rsuVests > 0
+      ? (netAnnualPay -
+          (rsuWithholding ? rsuWithholding.netRsuValue : rsuVests)) /
+        12
+      : null;
+
+  // Effective and marginal tax rates
+  const effectiveRate =
+    totalGrossIncome > 0
+      ? (incomeTax + nationalInsurance) / totalGrossIncome
+      : 0;
+
+  // Marginal rate: the rate on the next £1 of income
+  const marginalTaxRate =
+    taxableIncome > 125140
+      ? 0.45
+      : taxableIncome > 37700
+        ? 0.4
+        : taxableIncome > 0
+          ? 0.2
+          : 0;
+  // PA taper adds effective 60% rate between £100k-£125,140
+  const adjustedForTaper =
+    adjustedNetIncome > 100000 && adjustedNetIncome < 125140;
+  const marginalNiRate =
+    niableIncome > 50270 ? 0.02 : niableIncome > 12570 ? 0.08 : 0;
+  const marginalRate =
+    (adjustedForTaper ? marginalTaxRate + 0.2 : marginalTaxRate) +
+    marginalNiRate;
+
   return {
     grossSalary,
     bonus,
@@ -370,5 +407,8 @@ export function calculateTax(
     netAnnualPay,
     netMonthlyPay,
     payeMonthlyPay,
+    payeMonthlyWithRsu,
+    effectiveRate,
+    marginalRate,
   };
 }

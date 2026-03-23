@@ -99,19 +99,76 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
           bold
           highlight="green"
         />
+        <div className="my-2 border-t border-blue-200" />
+        <div className="text-sm">
+          <Row
+            label="Effective tax rate"
+            value={`${(result.effectiveRate * 100).toFixed(1)}%`}
+          />
+          <Row
+            label="Marginal rate (next £1)"
+            value={`${(result.marginalRate * 100).toFixed(0)}%`}
+          />
+          <Row
+            label="Personal allowance remaining"
+            value={formatCurrency(result.personalAllowance)}
+          />
+          {result.personalAllowance < 12570 && result.personalAllowance > 0 && (
+            <p className="text-xs text-amber-600">
+              Tapered from £12,570 due to income over £100,000
+            </p>
+          )}
+          {result.personalAllowance === 0 &&
+            result.adjustedNetIncome > 100000 && (
+              <p className="text-xs text-amber-600">
+                Fully tapered — income exceeds £125,140
+              </p>
+            )}
+        </div>
+        {result.rsuVests > 0 && (
+          <>
+            <div className="my-2 border-t border-blue-200" />
+            <p className="mb-1 text-xs font-medium text-blue-700">RSUs</p>
+            <div className="text-sm">
+              <Row
+                label="RSU gross value"
+                value={formatCurrency(result.rsuVests)}
+              />
+              {result.rsuWithholding && (
+                <Row
+                  label="Net RSUs received"
+                  value={formatCurrency(result.rsuWithholding.netRsuValue)}
+                  highlight="green"
+                />
+              )}
+            </div>
+          </>
+        )}
         {result.payeMonthlyPay !== null && (
           <>
             <div className="my-2 border-t border-blue-200" />
-            <Row
-              label="Monthly payslip (excl. RSUs)"
-              value={formatCurrency(result.payeMonthlyPay)}
-              bold
-              highlight="green"
-            />
-            <p className="mt-0.5 text-xs text-blue-600">
-              What you see on a normal month&apos;s payslip, with tax calculated
-              on salary only
+            <p className="mb-1 text-xs font-medium text-blue-700">
+              Monthly payslip
             </p>
+            <div className="text-sm">
+              <Row
+                label="Normal month (excl. RSUs)"
+                value={formatCurrency(result.payeMonthlyPay)}
+                bold
+                highlight="green"
+              />
+              {result.payeMonthlyWithRsu !== null && (
+                <Row
+                  label="RSU vest month"
+                  value={formatCurrency(result.payeMonthlyWithRsu)}
+                  highlight="green"
+                />
+              )}
+              <p className="mt-0.5 text-xs text-blue-600">
+                Normal month is tax on salary only. RSU vest month includes the
+                additional tax burden from RSU income.
+              </p>
+            </div>
           </>
         )}
       </div>
