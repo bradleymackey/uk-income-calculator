@@ -131,15 +131,31 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
             <p className="mb-1 text-xs font-medium text-blue-700">RSUs</p>
             <div className="text-sm">
               <Row
-                label="RSU gross value"
+                label="Annual RSU gross"
                 value={formatCurrency(result.rsuVests)}
               />
               {result.rsuWithholding && (
                 <Row
-                  label="Net RSUs received"
+                  label="Annual net received"
                   value={formatCurrency(result.rsuWithholding.netRsuValue)}
                   highlight="green"
                 />
+              )}
+              {result.rsuPerVest && (
+                <>
+                  <div className="my-1 border-t border-blue-200" />
+                  <Row
+                    label={`Per vest (${result.rsuPerVest.vestingPeriods}x/year)`}
+                    value={formatCurrency(result.rsuPerVest.grossPerVest)}
+                  />
+                  {result.rsuWithholding && (
+                    <Row
+                      label="Net per vest"
+                      value={formatCurrency(result.rsuPerVest.netPerVest)}
+                      highlight="green"
+                    />
+                  )}
+                </>
               )}
             </div>
           </>
@@ -157,16 +173,16 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
                 bold
                 highlight="green"
               />
-              {result.payeMonthlyWithRsu !== null && (
+              {result.payeMonthlyWithRsu !== null && result.rsuPerVest && (
                 <Row
-                  label="RSU vest month"
+                  label={`Vest month (${result.rsuPerVest.vestingPeriods} months/year)`}
                   value={formatCurrency(result.payeMonthlyWithRsu)}
                   highlight="green"
                 />
               )}
               <p className="mt-0.5 text-xs text-blue-600">
-                Normal month is tax on salary only. RSU vest month includes the
-                additional tax burden from RSU income.
+                Normal month is tax on salary only. Vest months carry the
+                additional tax from RSU income.
               </p>
             </div>
           </>

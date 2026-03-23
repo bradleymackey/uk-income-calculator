@@ -17,6 +17,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     taxableBenefits: 0,
     rsuVests: 0,
     rsuTaxWithheld: false,
+    rsuVestingPeriodsPerYear: 4,
     pensionContribution: {
       type: 'percentage',
       value: 0,

@@ -6,6 +6,7 @@ export interface CalculatorInput {
   taxableBenefits: number;
   rsuVests: number;
   rsuTaxWithheld: boolean;
+  rsuVestingPeriodsPerYear: number;
   pensionContribution: {
     type: 'percentage' | 'fixed';
     value: number;
@@ -38,6 +39,11 @@ export interface CalculationResult {
     niWithheld: number;
     totalWithheld: number;
     netRsuValue: number;
+  } | null;
+  rsuPerVest: {
+    vestingPeriods: number;
+    grossPerVest: number;
+    netPerVest: number;
   } | null;
   totalGrossIncome: number;
 
@@ -286,6 +292,18 @@ export function calculateTax(
         }
       : null;
 
+  const vestingPeriods = input.rsuVestingPeriodsPerYear;
+  const rsuPerVest =
+    rsuVests > 0 && vestingPeriods > 0
+      ? {
+          vestingPeriods,
+          grossPerVest: rsuVests / vestingPeriods,
+          netPerVest: rsuWithholding
+            ? rsuWithholding.netRsuValue / vestingPeriods
+            : rsuVests / vestingPeriods,
+        }
+      : null;
+
   // 12. Total deductions and net pay
   const totalDeductions =
     incomeTax +
@@ -340,15 +358,19 @@ export function calculateTax(
     payeMonthlyPay = payeAnnual / 12;
   }
 
-  // Monthly payslip during an RSU vest period: full tax (inc RSUs) via PAYE,
-  // minus the RSU net that goes to brokerage. This is what PAYE looks like
-  // in the month RSUs vest and tax is adjusted.
-  const payeMonthlyWithRsu =
-    rsuVests > 0
-      ? (netAnnualPay -
-          (rsuWithholding ? rsuWithholding.netRsuValue : rsuVests)) /
-        12
-      : null;
+  // Monthly payslip during an RSU vest month.
+  // Annual PAYE cash = net pay minus what goes to brokerage.
+  // Non-vest months get the salary-only payslip. The rest is spread across vest months.
+  let payeMonthlyWithRsu: number | null = null;
+  if (rsuVests > 0 && payeMonthlyPay !== null && vestingPeriods > 0) {
+    const rsuToBrokerage = rsuWithholding
+      ? rsuWithholding.netRsuValue
+      : rsuVests;
+    const annualPayeCash = netAnnualPay - rsuToBrokerage;
+    const nonVestMonths = 12 - vestingPeriods;
+    const nonVestTotal = payeMonthlyPay * nonVestMonths;
+    payeMonthlyWithRsu = (annualPayeCash - nonVestTotal) / vestingPeriods;
+  }
 
   // Effective and marginal tax rates
   const effectiveRate =
@@ -380,6 +402,7 @@ export function calculateTax(
     taxableBenefits,
     rsuVests,
     rsuWithholding,
+    rsuPerVest,
     totalGrossIncome,
     pensionContribution,
     employerPensionContribution,

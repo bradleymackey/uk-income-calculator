@@ -102,7 +102,7 @@ export function CalculatorForm({
     const clears: Partial<Record<OptionalField, Partial<CalculatorInput>>> = {
       bonus: { bonus: 0 },
       benefits: { taxableBenefits: 0 },
-      rsus: { rsuVests: 0, rsuTaxWithheld: false },
+      rsus: { rsuVests: 0, rsuTaxWithheld: false, rsuVestingPeriodsPerYear: 4 },
       employerPension: {
         employerPensionContribution: { type: 'percentage', value: 0 },
       },
@@ -197,30 +197,47 @@ export function CalculatorForm({
                 tooltip="Total value of Restricted Stock Units vesting this tax year. Taxed as employment income on the vesting date."
               />
               {input.rsuVests > 0 && (
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={input.rsuTaxWithheld}
-                    onChange={(e) =>
-                      update({ rsuTaxWithheld: e.target.checked })
+                <>
+                  <InputField
+                    label="Vesting periods per year"
+                    value={input.rsuVestingPeriodsPerYear || ''}
+                    onChange={(v) =>
+                      update({
+                        rsuVestingPeriodsPerYear: Math.min(
+                          12,
+                          Math.max(1, parseInt(v) || 4),
+                        ),
+                      })
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    step="1"
+                    min={1}
+                    tooltip="How many times per year your RSUs vest (e.g. 4 for quarterly, 12 for monthly). Affects how the tax burden is spread across your payslips."
                   />
-                  Tax withheld on vest (45% tax + 2% NI)
-                  <Tooltip content="Your employer sells shares at vest to cover tax. The standard withholding rate is 45% income tax + 2% NI. Any overpayment is refunded via self-assessment.">
-                    <svg
-                      className="h-3.5 w-3.5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                      <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-                    </svg>
-                  </Tooltip>
-                </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={input.rsuTaxWithheld}
+                      onChange={(e) =>
+                        update({ rsuTaxWithheld: e.target.checked })
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    Tax withheld on vest (45% tax + 2% NI)
+                    <Tooltip content="Your employer sells shares at vest to cover tax. The standard withholding rate is 45% income tax + 2% NI. Any overpayment is refunded via self-assessment.">
+                      <svg
+                        className="h-3.5 w-3.5 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+                      </svg>
+                    </Tooltip>
+                  </label>
+                </>
               )}
             </>
           )}
