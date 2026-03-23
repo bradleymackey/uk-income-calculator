@@ -74,6 +74,8 @@ export interface CalculationResult {
   totalDeductions: number;
   netAnnualPay: number;
   netMonthlyPay: number;
+  payeNetAnnualPay: number;
+  payeNetMonthlyPay: number;
 }
 
 export function calculatePersonalAllowance(
@@ -293,6 +295,10 @@ export function calculateTax(
   const netAnnualPay = totalGrossIncome - totalDeductions;
   const netMonthlyPay = netAnnualPay / 12;
 
+  // PAYE take-home excludes RSU value (paid into separate account)
+  const payeNetAnnualPay = netAnnualPay - rsuVests;
+  const payeNetMonthlyPay = payeNetAnnualPay / 12;
+
   return {
     grossSalary,
     bonus,
@@ -325,5 +331,7 @@ export function calculateTax(
     totalDeductions,
     netAnnualPay,
     netMonthlyPay,
+    payeNetAnnualPay,
+    payeNetMonthlyPay,
   };
 }

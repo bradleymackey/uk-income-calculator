@@ -87,18 +87,56 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
           highlight="red"
         />
         <div className="my-2 border-t border-blue-200" />
-        <Row
-          label="Annual take-home"
-          value={formatCurrency(result.netAnnualPay)}
-          bold
-          highlight="green"
-        />
-        <Row
-          label="Monthly take-home"
-          value={formatCurrency(result.netMonthlyPay)}
-          bold
-          highlight="green"
-        />
+        {result.rsuVests > 0 ? (
+          <>
+            <p className="mb-1 text-xs font-medium text-blue-700">
+              PAYE (excluding RSUs)
+            </p>
+            <Row
+              label="Annual take-home"
+              value={formatCurrency(result.payeNetAnnualPay)}
+              bold
+              highlight="green"
+            />
+            <Row
+              label="Monthly take-home"
+              value={formatCurrency(result.payeNetMonthlyPay)}
+              bold
+              highlight="green"
+            />
+            <div className="my-2 border-t border-blue-200" />
+            <p className="mb-1 text-xs font-medium text-blue-700">
+              Including RSUs
+            </p>
+            <Row
+              label="Annual take-home"
+              value={formatCurrency(result.netAnnualPay)}
+              bold
+              highlight="green"
+            />
+            <Row
+              label="Monthly take-home"
+              value={formatCurrency(result.netMonthlyPay)}
+              bold
+              highlight="green"
+            />
+          </>
+        ) : (
+          <>
+            <Row
+              label="Annual take-home"
+              value={formatCurrency(result.netAnnualPay)}
+              bold
+              highlight="green"
+            />
+            <Row
+              label="Monthly take-home"
+              value={formatCurrency(result.netMonthlyPay)}
+              bold
+              highlight="green"
+            />
+          </>
+        )}
       </div>
 
       {/* Income */}
