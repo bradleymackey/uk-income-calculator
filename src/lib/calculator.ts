@@ -295,8 +295,13 @@ export function calculateTax(
   const netAnnualPay = totalGrossIncome - totalDeductions;
   const netMonthlyPay = netAnnualPay / 12;
 
-  // PAYE take-home excludes RSU value (paid into separate account)
-  const payeNetAnnualPay = netAnnualPay - rsuVests;
+  // PAYE take-home excludes what goes into the brokerage account.
+  // With withholding: only the net RSU value (after tax withheld from shares)
+  //   goes to brokerage — the withheld portion doesn't come from PAYE.
+  // Without withholding: full RSU value goes to brokerage, and all tax on
+  //   RSUs is collected via PAYE tax code adjustment.
+  const rsuToBrokerage = rsuWithholding ? rsuWithholding.netRsuValue : rsuVests;
+  const payeNetAnnualPay = netAnnualPay - rsuToBrokerage;
   const payeNetMonthlyPay = payeNetAnnualPay / 12;
 
   return {

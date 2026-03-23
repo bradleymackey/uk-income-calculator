@@ -334,7 +334,21 @@ describe('calculateTax', () => {
     expect(result.rsuWithholding!.netRsuValue).toBe(5300); // 53%
   });
 
-  it('returns null RSU withholding when disabled', () => {
+  it('PAYE net excludes only net RSU when withholding is on', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        rsuVests: 10000,
+        rsuTaxWithheld: true,
+      }),
+      rules,
+    );
+
+    // PAYE should exclude net RSU (5300), not gross RSU (10000)
+    expect(result.payeNetAnnualPay).toBeCloseTo(result.netAnnualPay - 5300, 2);
+  });
+
+  it('PAYE net excludes full RSU when withholding is off', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 40000,
@@ -344,6 +358,8 @@ describe('calculateTax', () => {
       rules,
     );
 
+    // All tax via PAYE, full RSU goes to brokerage
+    expect(result.payeNetAnnualPay).toBeCloseTo(result.netAnnualPay - 10000, 2);
     expect(result.rsuWithholding).toBeNull();
   });
 
