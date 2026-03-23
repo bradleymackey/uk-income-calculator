@@ -134,7 +134,7 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
             {result.pensionContribution > 0 && (
               <Row
                 label="Your workplace pension"
-                value={`-${formatCurrency(result.pensionContribution)}`}
+                value={formatCurrency(result.pensionContribution)}
               />
             )}
             {result.employerPensionContribution > 0 && (
