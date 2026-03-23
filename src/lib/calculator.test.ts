@@ -353,6 +353,27 @@ describe('calculateTax', () => {
     expect(withoutRsus.payeMonthlyPay).toBeNull();
   });
 
+  it('SIPP does not affect monthly payslip', () => {
+    const withSipp = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        rsuVests: 10000,
+        sippContribution: 5000,
+      }),
+      rules,
+    );
+    const withoutSipp = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        rsuVests: 10000,
+      }),
+      rules,
+    );
+
+    // SIPP is personal, not via payroll — payslip should be identical
+    expect(withSipp.payeMonthlyPay).toBeCloseTo(withoutSipp.payeMonthlyPay!, 2);
+  });
+
   it('handles RSU vests', () => {
     const result = calculateTax(
       makeInput({

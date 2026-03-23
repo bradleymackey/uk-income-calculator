@@ -295,13 +295,17 @@ export function calculateTax(
   const netMonthlyPay = netAnnualPay / 12;
 
   // Monthly PAYE payslip: what a normal month looks like when no RSUs vest.
-  // Recalculate tax/NI/student loan on non-RSU income only.
+  // Only includes what flows through payroll:
+  //   Cash in:  salary + bonus
+  //   Tax:      on salary + bonus + BIK (BIK coded into tax code, not cash)
+  //   NI:       on salary + bonus (not BIK)
+  //   Out:      workplace pension (deducted from payroll)
+  // Excludes:   RSUs (brokerage), SIPP (personal), BIK (not cash)
   let payeMonthlyPay: number | null = null;
   if (rsuVests > 0) {
     const payeGross = grossSalary + bonus + taxableBenefits;
     const payeNiable = grossSalary + bonus - salarySacrificeDeduction;
-    const payeAdjusted =
-      payeGross - salarySacrificeDeduction - sippContribution;
+    const payeAdjusted = payeGross - salarySacrificeDeduction;
     const payePA = calculatePersonalAllowance(payeAdjusted, rules);
     const payeTaxable = Math.max(0, payeAdjusted - payePA);
     const payeIncomeTax = calculateBandedTax(
@@ -329,8 +333,7 @@ export function calculateTax(
       payeIncomeTax -
       payeNI -
       payeStudentLoan -
-      pensionContribution -
-      sippContribution;
+      pensionContribution;
     payeMonthlyPay = payeAnnual / 12;
   }
 
