@@ -1,4 +1,4 @@
-import type { TaxRules, StudentLoanPlanId } from './tax-rules';
+import type { TaxRules, UndergraduatePlanId } from './tax-rules';
 
 export interface CalculatorInput {
   grossSalary: number;
@@ -15,7 +15,8 @@ export interface CalculatorInput {
     value: number;
   };
   sippContribution: number;
-  studentLoanPlan: StudentLoanPlanId;
+  undergraduatePlan: UndergraduatePlanId;
+  hasPostgraduateLoan: boolean;
 }
 
 export interface BandBreakdown {
@@ -48,6 +49,8 @@ export interface CalculationResult {
   niBands: BandBreakdown[];
   nationalInsurance: number;
 
+  undergraduateLoanRepayment: number;
+  postgraduateLoanRepayment: number;
   studentLoanRepayment: number;
 
   sippRelief: {
@@ -97,13 +100,12 @@ export function calculateBandedTax(
     .filter((b) => b.amount > 0);
 }
 
-export function calculateStudentLoan(
+export function calculateStudentLoanForPlan(
   income: number,
-  plan: StudentLoanPlanId,
+  planId: string,
   rules: TaxRules,
 ): number {
-  if (plan === 'none') return 0;
-  const planRules = rules.studentLoans[plan];
+  const planRules = rules.studentLoans[planId];
   if (!planRules) return 0;
   return Math.max(0, (income - planRules.threshold) * planRules.rate);
 }
@@ -218,13 +220,21 @@ export function calculateTax(
   );
   const nationalInsurance = niBands.reduce((sum, b) => sum + b.tax, 0);
 
-  // 9. Student loan
+  // 9. Student loans
   const studentLoanIncome = niableIncome;
-  const studentLoanRepayment = calculateStudentLoan(
-    studentLoanIncome,
-    input.studentLoanPlan,
-    rules,
-  );
+  const undergraduateLoanRepayment =
+    input.undergraduatePlan !== 'none'
+      ? calculateStudentLoanForPlan(
+          studentLoanIncome,
+          input.undergraduatePlan,
+          rules,
+        )
+      : 0;
+  const postgraduateLoanRepayment = input.hasPostgraduateLoan
+    ? calculateStudentLoanForPlan(studentLoanIncome, 'postgraduate', rules)
+    : 0;
+  const studentLoanRepayment =
+    undergraduateLoanRepayment + postgraduateLoanRepayment;
 
   // 10. SIPP relief breakdown
   const sippRelief = calculateSippRelief(
@@ -263,6 +273,8 @@ export function calculateTax(
     incomeTax,
     niBands,
     nationalInsurance,
+    undergraduateLoanRepayment,
+    postgraduateLoanRepayment,
     studentLoanRepayment,
     sippRelief,
     totalDeductions,

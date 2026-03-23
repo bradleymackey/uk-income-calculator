@@ -34,10 +34,14 @@
     }
   },
   "studentLoans": {
-    "plan1": { "threshold": 26065, "rate": 0.09 },
-    "plan2": { "threshold": 28470, "rate": 0.09 },
-    "plan4": { "threshold": 32745, "rate": 0.09 },
-    "plan5": { "threshold": 25000, "rate": 0.09 },
-    "postgraduate": { "threshold": 21000, "rate": 0.06 }
+    "plan1": { "label": "Plan 1", "threshold": 26065, "rate": 0.09 },
+    "plan2": { "label": "Plan 2", "threshold": 28470, "rate": 0.09 },
+    "plan4": { "label": "Plan 4 (Scotland)", "threshold": 32745, "rate": 0.09 },
+    "plan5": { "label": "Plan 5", "threshold": 25000, "rate": 0.09 },
+    "postgraduate": {
+      "label": "Postgraduate Loan",
+      "threshold": 21000,
+      "rate": 0.06
+    }
   }
 }

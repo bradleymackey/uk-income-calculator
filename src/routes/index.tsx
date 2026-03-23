@@ -24,7 +24,8 @@ const defaultInput: CalculatorInput = {
     value: 0,
   },
   sippContribution: 0,
-  studentLoanPlan: 'none',
+  undergraduatePlan: 'none',
+  hasPostgraduateLoan: false,
 };
 
 function HomePage() {
@@ -47,7 +48,11 @@ function HomePage() {
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
-            <CalculatorForm input={input} onChange={setInput} />
+            <CalculatorForm
+              input={input}
+              onChange={setInput}
+              taxRules={rules}
+            />
           </div>
           <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">

@@ -265,11 +265,29 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
             Student Loan
           </h3>
           <div className="text-sm">
-            <Row
-              label="Repayment"
-              value={`-${formatCurrency(result.studentLoanRepayment)}`}
-              highlight="red"
-            />
+            {result.undergraduateLoanRepayment > 0 && (
+              <Row
+                label="Undergraduate repayment"
+                value={`-${formatCurrency(result.undergraduateLoanRepayment)}`}
+                highlight="red"
+              />
+            )}
+            {result.postgraduateLoanRepayment > 0 && (
+              <Row
+                label="Postgraduate repayment"
+                value={`-${formatCurrency(result.postgraduateLoanRepayment)}`}
+                highlight="red"
+              />
+            )}
+            {result.undergraduateLoanRepayment > 0 &&
+              result.postgraduateLoanRepayment > 0 && (
+                <Row
+                  label="Total student loan"
+                  value={`-${formatCurrency(result.studentLoanRepayment)}`}
+                  bold
+                  highlight="red"
+                />
+              )}
           </div>
         </section>
       )}

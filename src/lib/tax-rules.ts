@@ -14,17 +14,17 @@ export interface PersonalAllowance {
 }
 
 export interface StudentLoanPlan {
+  label: string;
   threshold: number;
   rate: number;
 }
 
-export type StudentLoanPlanId =
+export type UndergraduatePlanId =
   | 'none'
   | 'plan1'
   | 'plan2'
   | 'plan4'
-  | 'plan5'
-  | 'postgraduate';
+  | 'plan5';
 
 export interface TaxRules {
   taxYear: string;

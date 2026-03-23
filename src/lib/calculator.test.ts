@@ -3,7 +3,7 @@ import {
   calculateTax,
   calculatePersonalAllowance,
   calculateBandedTax,
-  calculateStudentLoan,
+  calculateStudentLoanForPlan,
   type CalculatorInput,
 } from './calculator';
 import { getTaxRules } from './tax-rules';
@@ -26,7 +26,8 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
       value: 0,
     },
     sippContribution: 0,
-    studentLoanPlan: 'none',
+    undergraduatePlan: 'none',
+    hasPostgraduateLoan: false,
     ...overrides,
   };
 }
@@ -75,27 +76,23 @@ describe('calculateBandedTax', () => {
   });
 });
 
-describe('calculateStudentLoan', () => {
-  it('returns 0 for no plan', () => {
-    expect(calculateStudentLoan(50000, 'none', rules)).toBe(0);
-  });
-
+describe('calculateStudentLoanForPlan', () => {
   it('returns 0 when income below plan 1 threshold', () => {
-    expect(calculateStudentLoan(25000, 'plan1', rules)).toBe(0);
+    expect(calculateStudentLoanForPlan(25000, 'plan1', rules)).toBe(0);
   });
 
   it('calculates plan 1 repayment', () => {
-    const repayment = calculateStudentLoan(30000, 'plan1', rules);
+    const repayment = calculateStudentLoanForPlan(30000, 'plan1', rules);
     expect(repayment).toBeCloseTo((30000 - 26065) * 0.09, 2);
   });
 
   it('calculates plan 2 repayment', () => {
-    const repayment = calculateStudentLoan(35000, 'plan2', rules);
+    const repayment = calculateStudentLoanForPlan(35000, 'plan2', rules);
     expect(repayment).toBeCloseTo((35000 - 28470) * 0.09, 2);
   });
 
   it('calculates postgraduate repayment at 6%', () => {
-    const repayment = calculateStudentLoan(30000, 'postgraduate', rules);
+    const repayment = calculateStudentLoanForPlan(30000, 'postgraduate', rules);
     expect(repayment).toBeCloseTo((30000 - 21000) * 0.06, 2);
   });
 });
@@ -309,16 +306,54 @@ describe('calculateTax', () => {
     expect(result.nationalInsurance).toBeCloseTo(2594.4, 2);
   });
 
-  it('handles student loan plan 1 with £30,000 salary', () => {
+  it('handles undergraduate loan plan 1 with £30,000 salary', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 30000,
-        studentLoanPlan: 'plan1',
+        undergraduatePlan: 'plan1',
       }),
       rules,
     );
 
+    expect(result.undergraduateLoanRepayment).toBeCloseTo(
+      (30000 - 26065) * 0.09,
+      2,
+    );
+    expect(result.postgraduateLoanRepayment).toBe(0);
     expect(result.studentLoanRepayment).toBeCloseTo((30000 - 26065) * 0.09, 2);
+  });
+
+  it('handles postgraduate loan only', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 30000,
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+
+    expect(result.undergraduateLoanRepayment).toBe(0);
+    expect(result.postgraduateLoanRepayment).toBeCloseTo(
+      (30000 - 21000) * 0.06,
+      2,
+    );
+  });
+
+  it('combines undergraduate and postgraduate loans', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+
+    const expectedUg = (40000 - 28470) * 0.09;
+    const expectedPg = (40000 - 21000) * 0.06;
+    expect(result.undergraduateLoanRepayment).toBeCloseTo(expectedUg, 2);
+    expect(result.postgraduateLoanRepayment).toBeCloseTo(expectedPg, 2);
+    expect(result.studentLoanRepayment).toBeCloseTo(expectedUg + expectedPg, 2);
   });
 
   it('calculates correct monthly pay', () => {

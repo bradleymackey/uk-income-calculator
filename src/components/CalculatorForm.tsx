@@ -1,13 +1,19 @@
 import type { CalculatorInput } from '~/lib/calculator';
-import type { StudentLoanPlanId } from '~/lib/tax-rules';
+import type { TaxRules, UndergraduatePlanId } from '~/lib/tax-rules';
+import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
 
 interface CalculatorFormProps {
   input: CalculatorInput;
   onChange: (input: CalculatorInput) => void;
+  taxRules: TaxRules;
 }
 
-export function CalculatorForm({ input, onChange }: CalculatorFormProps) {
+export function CalculatorForm({
+  input,
+  onChange,
+  taxRules,
+}: CalculatorFormProps) {
   const update = (partial: Partial<CalculatorInput>) =>
     onChange({ ...input, ...partial });
 
@@ -154,26 +160,62 @@ export function CalculatorForm({ input, onChange }: CalculatorFormProps) {
         <h2 className="mb-3 text-lg font-semibold text-gray-900">
           Student Loan
         </h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Repayment plan
-          </label>
-          <select
-            value={input.studentLoanPlan}
-            onChange={(e) =>
-              update({
-                studentLoanPlan: e.target.value as StudentLoanPlanId,
-              })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="none">None</option>
-            <option value="plan1">Plan 1</option>
-            <option value="plan2">Plan 2</option>
-            <option value="plan4">Plan 4 (Scotland)</option>
-            <option value="plan5">Plan 5</option>
-            <option value="postgraduate">Postgraduate Loan</option>
-          </select>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Undergraduate plan
+            </label>
+            <select
+              value={input.undergraduatePlan}
+              onChange={(e) =>
+                update({
+                  undergraduatePlan: e.target.value as UndergraduatePlanId,
+                })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="none">None</option>
+              <option value="plan1">Plan 1</option>
+              <option value="plan2">Plan 2</option>
+              <option value="plan4">Plan 4 (Scotland)</option>
+              <option value="plan5">Plan 5</option>
+            </select>
+            {input.undergraduatePlan !== 'none' &&
+              taxRules.studentLoans[input.undergraduatePlan] && (
+                <p className="mt-1 text-xs text-gray-500">
+                  {formatPercentage(
+                    taxRules.studentLoans[input.undergraduatePlan].rate,
+                  )}{' '}
+                  on income above{' '}
+                  {formatCurrency(
+                    taxRules.studentLoans[input.undergraduatePlan].threshold,
+                  )}
+                </p>
+              )}
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={input.hasPostgraduateLoan}
+                onChange={(e) =>
+                  update({ hasPostgraduateLoan: e.target.checked })
+                }
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              Postgraduate Loan
+            </label>
+            {input.hasPostgraduateLoan &&
+              taxRules.studentLoans['postgraduate'] && (
+                <p className="mt-1 text-xs text-gray-500">
+                  {formatPercentage(taxRules.studentLoans['postgraduate'].rate)}{' '}
+                  on income above{' '}
+                  {formatCurrency(
+                    taxRules.studentLoans['postgraduate'].threshold,
+                  )}
+                </p>
+              )}
+          </div>
         </div>
       </section>
     </div>
