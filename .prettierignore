@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+node_modules
+.output
+dist
+.vinxi
+.tanstack
+src/routeTree.gen.ts
