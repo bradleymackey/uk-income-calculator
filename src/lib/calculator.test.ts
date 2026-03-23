@@ -334,33 +334,23 @@ describe('calculateTax', () => {
     expect(result.rsuWithholding!.netRsuValue).toBe(5300); // 53%
   });
 
-  it('PAYE net excludes only net RSU when withholding is on', () => {
-    const result = calculateTax(
-      makeInput({
-        grossSalary: 40000,
-        rsuVests: 10000,
-        rsuTaxWithheld: true,
-      }),
+  it('calculates monthly payslip excluding RSU income', () => {
+    // With RSUs: tax is higher due to combined income
+    const withRsus = calculateTax(
+      makeInput({ grossSalary: 50000, rsuVests: 20000 }),
       rules,
     );
+    // Without RSUs: tax on salary alone
+    const withoutRsus = calculateTax(makeInput({ grossSalary: 50000 }), rules);
 
-    // PAYE should exclude net RSU (5300), not gross RSU (10000)
-    expect(result.payeNetAnnualPay).toBeCloseTo(result.netAnnualPay - 5300, 2);
-  });
-
-  it('PAYE net excludes full RSU when withholding is off', () => {
-    const result = calculateTax(
-      makeInput({
-        grossSalary: 40000,
-        rsuVests: 10000,
-        rsuTaxWithheld: false,
-      }),
-      rules,
+    // PAYE monthly should match what you'd get with salary only
+    expect(withRsus.payeMonthlyPay).not.toBeNull();
+    expect(withRsus.payeMonthlyPay).toBeCloseTo(
+      withoutRsus.netAnnualPay / 12,
+      2,
     );
-
-    // All tax via PAYE, full RSU goes to brokerage
-    expect(result.payeNetAnnualPay).toBeCloseTo(result.netAnnualPay - 10000, 2);
-    expect(result.rsuWithholding).toBeNull();
+    // No RSUs → no separate PAYE figure needed
+    expect(withoutRsus.payeMonthlyPay).toBeNull();
   });
 
   it('handles RSU vests', () => {

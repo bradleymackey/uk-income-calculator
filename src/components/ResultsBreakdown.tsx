@@ -87,54 +87,31 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
           highlight="red"
         />
         <div className="my-2 border-t border-blue-200" />
-        {result.rsuVests > 0 ? (
+        <Row
+          label="Annual take-home"
+          value={formatCurrency(result.netAnnualPay)}
+          bold
+          highlight="green"
+        />
+        <Row
+          label="Monthly take-home"
+          value={formatCurrency(result.netMonthlyPay)}
+          bold
+          highlight="green"
+        />
+        {result.payeMonthlyPay !== null && (
           <>
-            <p className="mb-1 text-xs font-medium text-blue-700">
-              PAYE (excluding RSUs)
-            </p>
-            <Row
-              label="Annual take-home"
-              value={formatCurrency(result.payeNetAnnualPay)}
-              bold
-              highlight="green"
-            />
-            <Row
-              label="Monthly take-home"
-              value={formatCurrency(result.payeNetMonthlyPay)}
-              bold
-              highlight="green"
-            />
             <div className="my-2 border-t border-blue-200" />
-            <p className="mb-1 text-xs font-medium text-blue-700">
-              Including RSUs
+            <Row
+              label="Monthly payslip (excl. RSUs)"
+              value={formatCurrency(result.payeMonthlyPay)}
+              bold
+              highlight="green"
+            />
+            <p className="mt-0.5 text-xs text-blue-600">
+              What you see on a normal month&apos;s payslip, with tax calculated
+              on salary only
             </p>
-            <Row
-              label="Annual take-home"
-              value={formatCurrency(result.netAnnualPay)}
-              bold
-              highlight="green"
-            />
-            <Row
-              label="Monthly take-home"
-              value={formatCurrency(result.netMonthlyPay)}
-              bold
-              highlight="green"
-            />
-          </>
-        ) : (
-          <>
-            <Row
-              label="Annual take-home"
-              value={formatCurrency(result.netAnnualPay)}
-              bold
-              highlight="green"
-            />
-            <Row
-              label="Monthly take-home"
-              value={formatCurrency(result.netMonthlyPay)}
-              bold
-              highlight="green"
-            />
           </>
         )}
       </div>

@@ -74,8 +74,7 @@ export interface CalculationResult {
   totalDeductions: number;
   netAnnualPay: number;
   netMonthlyPay: number;
-  payeNetAnnualPay: number;
-  payeNetMonthlyPay: number;
+  payeMonthlyPay: number | null;
 }
 
 export function calculatePersonalAllowance(
@@ -295,14 +294,45 @@ export function calculateTax(
   const netAnnualPay = totalGrossIncome - totalDeductions;
   const netMonthlyPay = netAnnualPay / 12;
 
-  // PAYE take-home excludes what goes into the brokerage account.
-  // With withholding: only the net RSU value (after tax withheld from shares)
-  //   goes to brokerage — the withheld portion doesn't come from PAYE.
-  // Without withholding: full RSU value goes to brokerage, and all tax on
-  //   RSUs is collected via PAYE tax code adjustment.
-  const rsuToBrokerage = rsuWithholding ? rsuWithholding.netRsuValue : rsuVests;
-  const payeNetAnnualPay = netAnnualPay - rsuToBrokerage;
-  const payeNetMonthlyPay = payeNetAnnualPay / 12;
+  // Monthly PAYE payslip: what a normal month looks like when no RSUs vest.
+  // Recalculate tax/NI/student loan on non-RSU income only.
+  let payeMonthlyPay: number | null = null;
+  if (rsuVests > 0) {
+    const payeGross = grossSalary + bonus + taxableBenefits;
+    const payeNiable = grossSalary + bonus - salarySacrificeDeduction;
+    const payeAdjusted =
+      payeGross - salarySacrificeDeduction - sippContribution;
+    const payePA = calculatePersonalAllowance(payeAdjusted, rules);
+    const payeTaxable = Math.max(0, payeAdjusted - payePA);
+    const payeIncomeTax = calculateBandedTax(
+      payeTaxable,
+      rules.incomeTax.bands,
+    ).reduce((sum, b) => sum + b.tax, 0);
+    const payeNI = calculateBandedTax(
+      payeNiable,
+      rules.nationalInsurance.employeeClass1.bands,
+    ).reduce((sum, b) => sum + b.tax, 0);
+    const payeStudentLoan =
+      (input.undergraduatePlan !== 'none'
+        ? calculateStudentLoanForPlan(
+            payeNiable,
+            input.undergraduatePlan,
+            rules,
+          )
+        : 0) +
+      (input.hasPostgraduateLoan
+        ? calculateStudentLoanForPlan(payeNiable, 'postgraduate', rules)
+        : 0);
+    const payeAnnual =
+      grossSalary +
+      bonus -
+      payeIncomeTax -
+      payeNI -
+      payeStudentLoan -
+      pensionContribution -
+      sippContribution;
+    payeMonthlyPay = payeAnnual / 12;
+  }
 
   return {
     grossSalary,
@@ -336,7 +366,6 @@ export function calculateTax(
     totalDeductions,
     netAnnualPay,
     netMonthlyPay,
-    payeNetAnnualPay,
-    payeNetMonthlyPay,
+    payeMonthlyPay,
   };
 }
