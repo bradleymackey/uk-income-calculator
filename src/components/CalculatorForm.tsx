@@ -37,8 +37,8 @@ export function CalculatorForm({
     });
 
   return (
-    <div className="space-y-6">
-      <section>
+    <div className="divide-y divide-gray-200">
+      <section className="py-5 first:pt-0 last:pb-0">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Income</h2>
         <div className="space-y-3">
           <InputField
@@ -80,7 +80,7 @@ export function CalculatorForm({
         </div>
       </section>
 
-      <section>
+      <section className="py-5 first:pt-0 last:pb-0">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Pension</h2>
         <div className="space-y-3">
           <div className="flex items-end gap-3">
@@ -179,7 +179,7 @@ export function CalculatorForm({
         </div>
       </section>
 
-      <section>
+      <section className="py-5 first:pt-0 last:pb-0">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">
           Student Loan
         </h2>
