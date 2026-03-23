@@ -19,6 +19,17 @@ export function CalculatorForm({ input, onChange }: CalculatorFormProps) {
       pensionContribution: { ...input.pensionContribution, ...partial },
     });
 
+  const updateEmployerPension = (
+    partial: Partial<CalculatorInput['employerPensionContribution']>,
+  ) =>
+    onChange({
+      ...input,
+      employerPensionContribution: {
+        ...input.employerPensionContribution,
+        ...partial,
+      },
+    });
+
   return (
     <div className="space-y-6">
       <section>
@@ -95,6 +106,40 @@ export function CalculatorForm({ input, onChange }: CalculatorFormProps) {
             />
             Salary sacrifice
           </label>
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <InputField
+                label="Employer pension contribution"
+                value={input.employerPensionContribution.value || ''}
+                onChange={(v) =>
+                  updateEmployerPension({ value: parseFloat(v) || 0 })
+                }
+                prefix={
+                  input.employerPensionContribution.type === 'fixed'
+                    ? '£'
+                    : undefined
+                }
+                suffix={
+                  input.employerPensionContribution.type === 'percentage'
+                    ? '%'
+                    : undefined
+                }
+                helpText="Does not affect your take-home pay"
+              />
+            </div>
+            <select
+              value={input.employerPensionContribution.type}
+              onChange={(e) =>
+                updateEmployerPension({
+                  type: e.target.value as 'percentage' | 'fixed',
+                })
+              }
+              className="mb-[22px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="percentage">%</option>
+              <option value="fixed">£</option>
+            </select>
+          </div>
           <InputField
             label="SIPP contribution (gross annual)"
             value={input.sippContribution || ''}

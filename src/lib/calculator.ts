@@ -10,6 +10,10 @@ export interface CalculatorInput {
     value: number;
     salarySacrifice: boolean;
   };
+  employerPensionContribution: {
+    type: 'percentage' | 'fixed';
+    value: number;
+  };
   sippContribution: number;
   studentLoanPlan: StudentLoanPlanId;
 }
@@ -29,6 +33,8 @@ export interface CalculationResult {
   totalGrossIncome: number;
 
   pensionContribution: number;
+  employerPensionContribution: number;
+  totalPensionContributions: number;
   sippContribution: number;
 
   niableIncome: number;
@@ -160,11 +166,16 @@ export function calculateTax(
 ): CalculationResult {
   const { grossSalary, bonus, taxableBenefits, rsuVests } = input;
 
-  // 1. Resolve pension contribution to £ amount
+  // 1. Resolve pension contributions to £ amounts
   const pensionContribution =
     input.pensionContribution.type === 'percentage'
       ? (grossSalary * input.pensionContribution.value) / 100
       : input.pensionContribution.value;
+
+  const employerPensionContribution =
+    input.employerPensionContribution.type === 'percentage'
+      ? (grossSalary * input.employerPensionContribution.value) / 100
+      : input.employerPensionContribution.value;
 
   const sippContribution = input.sippContribution;
 
@@ -240,6 +251,9 @@ export function calculateTax(
     rsuVests,
     totalGrossIncome,
     pensionContribution,
+    employerPensionContribution,
+    totalPensionContributions:
+      pensionContribution + employerPensionContribution + sippContribution,
     sippContribution,
     niableIncome,
     adjustedNetIncome,

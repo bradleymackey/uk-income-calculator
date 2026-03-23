@@ -19,6 +19,10 @@ const defaultInput: CalculatorInput = {
     value: 0,
     salarySacrifice: false,
   },
+  employerPensionContribution: {
+    type: 'percentage',
+    value: 0,
+  },
   sippContribution: 0,
   studentLoanPlan: 'none',
 };

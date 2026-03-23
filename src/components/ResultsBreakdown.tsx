@@ -122,7 +122,9 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
       </section>
 
       {/* Pension */}
-      {(result.pensionContribution > 0 || result.sippContribution > 0) && (
+      {(result.pensionContribution > 0 ||
+        result.employerPensionContribution > 0 ||
+        result.sippContribution > 0) && (
         <section>
           <h3 className="mb-1 text-sm font-semibold text-gray-900">
             Pension Contributions
@@ -130,8 +132,14 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
           <div className="text-sm">
             {result.pensionContribution > 0 && (
               <Row
-                label="Workplace pension"
+                label="Your workplace pension"
                 value={`-${formatCurrency(result.pensionContribution)}`}
+              />
+            )}
+            {result.employerPensionContribution > 0 && (
+              <Row
+                label="Employer contribution"
+                value={formatCurrency(result.employerPensionContribution)}
               />
             )}
             {result.sippContribution > 0 && (
@@ -182,6 +190,17 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
                   <Row
                     label="Effective cost to you"
                     value={formatCurrency(result.sippRelief.effectiveCost)}
+                    bold
+                  />
+                </div>
+              </>
+            )}
+            {result.totalPensionContributions > 0 && (
+              <>
+                <div className="mt-2 border-t border-gray-200 pt-2">
+                  <Row
+                    label="Total going into pension"
+                    value={formatCurrency(result.totalPensionContributions)}
                     bold
                   />
                 </div>
