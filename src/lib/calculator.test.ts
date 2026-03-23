@@ -375,6 +375,48 @@ describe('calculateTax', () => {
     expect(withSipp.payeMonthlyPay).toBeCloseTo(withoutSipp.payeMonthlyPay!, 2);
   });
 
+  it('vest month total = payslip + per-vest RSU net (withholding on)', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        rsuVests: 20000,
+        rsuTaxWithheld: true,
+        rsuVestingPeriodsPerYear: 4,
+      }),
+      rules,
+    );
+
+    // With withholding, payslip is salary-only
+    // Vest month = payslip + RSU net per vest
+    const perVestNet = (20000 * 0.53) / 4;
+    expect(result.vestMonthTotal).toBeCloseTo(
+      result.payeMonthlyPay! + perVestNet,
+      2,
+    );
+  });
+
+  it('shows adjusted payslip when withholding is off', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        rsuVests: 20000,
+        rsuTaxWithheld: false,
+        rsuVestingPeriodsPerYear: 4,
+      }),
+      rules,
+    );
+
+    // Without withholding, HMRC adjusts tax code — payslip is lower
+    expect(result.payeMonthlyAdjusted).not.toBeNull();
+    expect(result.payeMonthlyAdjusted!).toBeLessThan(result.payeMonthlyPay!);
+    // Vest month = adjusted payslip + full RSU per vest (no withholding)
+    const perVestGross = 20000 / 4;
+    expect(result.vestMonthTotal).toBeCloseTo(
+      result.payeMonthlyAdjusted! + perVestGross,
+      2,
+    );
+  });
+
   it('handles RSU vests', () => {
     const result = calculateTax(
       makeInput({

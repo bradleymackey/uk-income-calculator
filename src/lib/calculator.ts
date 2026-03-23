@@ -81,7 +81,8 @@ export interface CalculationResult {
   netAnnualPay: number;
   netMonthlyPay: number;
   payeMonthlyPay: number | null;
-  payeMonthlyWithRsu: number | null;
+  payeMonthlyAdjusted: number | null;
+  vestMonthTotal: number | null;
   effectiveRate: number;
   marginalRate: number;
 }
@@ -358,19 +359,27 @@ export function calculateTax(
     payeMonthlyPay = payeAnnual / 12;
   }
 
-  // Monthly payslip during an RSU vest month.
-  // Annual PAYE cash = net pay minus what goes to brokerage.
-  // Non-vest months get the salary-only payslip. The rest is spread across vest months.
-  let payeMonthlyWithRsu: number | null = null;
-  if (rsuVests > 0 && payeMonthlyPay !== null && vestingPeriods > 0) {
-    const rsuToBrokerage = rsuWithholding
-      ? rsuWithholding.netRsuValue
-      : rsuVests;
-    const annualPayeCash = netAnnualPay - rsuToBrokerage;
-    const nonVestMonths = 12 - vestingPeriods;
-    const nonVestTotal = payeMonthlyPay * nonVestMonths;
-    payeMonthlyWithRsu = (annualPayeCash - nonVestTotal) / vestingPeriods;
+  // When withholding is OFF, HMRC adjusts tax code to collect RSU tax from
+  // every payslip. This is the reduced payslip amount (all tax via PAYE).
+  let payeMonthlyAdjusted: number | null = null;
+  if (rsuVests > 0 && !input.rsuTaxWithheld) {
+    const adjustedPayeAnnual =
+      grossSalary +
+      bonus -
+      incomeTax -
+      nationalInsurance -
+      studentLoanRepayment -
+      pensionContribution;
+    payeMonthlyAdjusted = adjustedPayeAnnual / 12;
   }
+
+  // Total received in a vest month: payslip + per-vest RSU net
+  const vestMonthTotal =
+    rsuPerVest && payeMonthlyPay !== null
+      ? (input.rsuTaxWithheld
+          ? payeMonthlyPay
+          : (payeMonthlyAdjusted ?? payeMonthlyPay)) + rsuPerVest.netPerVest
+      : null;
 
   // Effective and marginal tax rates
   const effectiveRate =
@@ -430,7 +439,8 @@ export function calculateTax(
     netAnnualPay,
     netMonthlyPay,
     payeMonthlyPay,
-    payeMonthlyWithRsu,
+    payeMonthlyAdjusted,
+    vestMonthTotal,
     effectiveRate,
     marginalRate,
   };

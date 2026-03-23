@@ -167,23 +167,48 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
               Monthly payslip
             </p>
             <div className="text-sm">
-              <Row
-                label="Normal month (excl. RSUs)"
-                value={formatCurrency(result.payeMonthlyPay)}
-                bold
-                highlight="green"
-              />
-              {result.payeMonthlyWithRsu !== null && result.rsuPerVest && (
-                <Row
-                  label={`Vest month (${result.rsuPerVest.vestingPeriods} months/year)`}
-                  value={formatCurrency(result.payeMonthlyWithRsu)}
-                  highlight="green"
-                />
+              {result.rsuWithholding ? (
+                <>
+                  <Row
+                    label="PAYE payslip"
+                    value={formatCurrency(result.payeMonthlyPay)}
+                    bold
+                    highlight="green"
+                  />
+                  <p className="mt-0.5 text-xs text-blue-600">
+                    Tax on salary only — RSU tax covered by withholding
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Row
+                    label="PAYE payslip (tax code adjusted)"
+                    value={formatCurrency(result.payeMonthlyAdjusted!)}
+                    bold
+                    highlight="green"
+                  />
+                  <p className="mt-0.5 text-xs text-blue-600">
+                    Lower than salary-only (
+                    {formatCurrency(result.payeMonthlyPay)}/mo) because HMRC
+                    collects RSU tax via your tax code
+                  </p>
+                </>
               )}
-              <p className="mt-0.5 text-xs text-blue-600">
-                Normal month is tax on salary only. Vest months carry the
-                additional tax from RSU income.
-              </p>
+              {result.vestMonthTotal !== null && result.rsuPerVest && (
+                <>
+                  <div className="my-1 border-t border-blue-200" />
+                  <Row
+                    label={`Vest month total (${result.rsuPerVest.vestingPeriods}x/year)`}
+                    value={formatCurrency(result.vestMonthTotal)}
+                    bold
+                    highlight="green"
+                  />
+                  <p className="mt-0.5 text-xs text-blue-600">
+                    Payslip + {formatCurrency(result.rsuPerVest.netPerVest)} RSU
+                    net per vest
+                  </p>
+                </>
+              )}
             </div>
           </>
         )}
