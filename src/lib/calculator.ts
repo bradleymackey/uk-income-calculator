@@ -438,16 +438,33 @@ export function calculateTax(
       ? payeMonthlyPay + rsuPerVest.netPerVest
       : null;
 
-  // Effective tax rate
+  // Effective and marginal tax rates — computed without pension/SIPP so they
+  // reflect the underlying tax system and match the chart. Pension is a personal
+  // choice, not a tax rate.
+  const noPensionInput: CalculatorInput = {
+    ...input,
+    grossSalary: adjustedNetIncome,
+    bonus: 0,
+    taxableBenefits: 0,
+    rsuVests: 0,
+    rsuTaxWithheld: false,
+    pensionContribution: { type: 'fixed', value: 0, salarySacrifice: false },
+    employerPensionContribution: { type: 'fixed', value: 0 },
+    employerNiPassbackPercent: 0,
+    sippContribution: 0,
+  };
+  const rateDeductions = totalDeductionsAtSalary(
+    adjustedNetIncome,
+    noPensionInput,
+    rules,
+  );
   const effectiveRate =
-    totalGrossIncome > 0
-      ? (incomeTax + nationalInsurance) / totalGrossIncome
-      : 0;
-
-  // Marginal rate: compute empirically by comparing tax at current income
-  // vs income + £1. This automatically captures all factors: tax bands,
-  // PA taper, NI rates, student loan thresholds, salary sacrifice, etc.
-  const marginalRate = computeMarginalRate(input, grossSalary, rules);
+    adjustedNetIncome > 0 ? rateDeductions / adjustedNetIncome : 0;
+  const marginalRate = computeMarginalRate(
+    noPensionInput,
+    adjustedNetIncome,
+    rules,
+  );
 
   return {
     grossSalary,
