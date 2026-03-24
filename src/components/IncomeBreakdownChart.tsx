@@ -127,15 +127,21 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
       });
     }
     if (result.sippContribution > 0) {
+      // Show the net amount paid from your income (80% of gross),
+      // not the gross which includes 20% relief claimed by the provider
+      const sippNetPaid = result.sippContribution * 0.8;
       parts.push({
-        name: 'SIPP',
-        value: result.sippContribution,
+        name: 'SIPP (you pay)',
+        value: sippNetPaid,
         color: COLORS.sipp,
       });
     }
 
-    // Take home via PAYE (net pay minus RSUs which go to brokerage)
-    const takeHomePaye = result.netAnnualPay - result.rsuVests;
+    // Take home via PAYE. Add back the SIPP basic rate relief (20% of gross)
+    // since it comes from HMRC not from the user's income, and we only show
+    // the net SIPP amount (80%) in the pie.
+    const sippRelief = result.sippContribution * 0.2;
+    const takeHomePaye = result.netAnnualPay - result.rsuVests + sippRelief;
     if (takeHomePaye > 0) {
       parts.push({
         name: 'Take home',
