@@ -106,10 +106,10 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
 
   if (!mounted || totalGross <= 0 || data.length === 0) return null;
 
-  const totalTaxNiSl =
-    result.incomeTax + result.nationalInsurance + result.studentLoanRepayment;
-  const userEffective = totalGross > 0 ? (totalTaxNiSl / totalGross) * 100 : 0;
-  const userMarginal = result.marginalRate * 100;
+  // Dots use the same pension-free calculation as the curves
+  const userPoint = data.find((d) => d.income === Math.round(totalGross));
+  const userMarginal = userPoint?.marginal ?? 0;
+  const userEffective = userPoint?.effective ?? 0;
 
   const yMax = Math.max(
     10,
