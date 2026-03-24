@@ -27,6 +27,8 @@ export type UndergraduatePlanId =
   | 'plan4'
   | 'plan5';
 
+export type Country = 'england' | 'scotland';
+
 export interface ChildBenefitRules {
   weeklyRateFirstChild: number;
   weeklyRateAdditionalChild: number;
@@ -42,6 +44,9 @@ export interface TaxRules {
   label: string;
   personalAllowance: PersonalAllowance;
   incomeTax: {
+    bands: TaxBand[];
+  };
+  scottishIncomeTax: {
     bands: TaxBand[];
   };
   nationalInsurance: {
@@ -76,4 +81,13 @@ export function getTaxRules(taxYear: string = DEFAULT_TAX_YEAR): TaxRules {
 
 export function getAvailableTaxYears(): string[] {
   return Object.keys(taxRulesMap);
+}
+
+export function getIncomeTaxBands(
+  rules: TaxRules,
+  country: Country,
+): TaxBand[] {
+  return country === 'scotland'
+    ? rules.scottishIncomeTax.bands
+    : rules.incomeTax.bands;
 }

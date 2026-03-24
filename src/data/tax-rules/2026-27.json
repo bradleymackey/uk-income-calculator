@@ -13,6 +13,16 @@
       { "name": "Additional rate", "rate": 0.45, "from": 125140, "to": null }
     ]
   },
+  "scottishIncomeTax": {
+    "bands": [
+      { "name": "Starter rate", "rate": 0.19, "from": 0, "to": 3967 },
+      { "name": "Basic rate", "rate": 0.2, "from": 3967, "to": 16956 },
+      { "name": "Intermediate rate", "rate": 0.21, "from": 16956, "to": 31092 },
+      { "name": "Higher rate", "rate": 0.42, "from": 31092, "to": 62430 },
+      { "name": "Advanced rate", "rate": 0.45, "from": 62430, "to": 112570 },
+      { "name": "Top rate", "rate": 0.48, "from": 112570, "to": null }
+    ]
+  },
   "nationalInsurance": {
     "employerClass1": {
       "secondaryThreshold": 5000,

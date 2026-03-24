@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CalculatorInput } from '~/lib/calculator';
-import type { TaxRules, UndergraduatePlanId } from '~/lib/tax-rules';
+import type { TaxRules, UndergraduatePlanId, Country } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
 import { Tooltip } from './Tooltip';
@@ -150,6 +150,38 @@ export function CalculatorForm({
 
   return (
     <div className="divide-y divide-gray-200">
+      <section className="py-5 first:pt-0 last:pb-0">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">About me</h2>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            I live in
+          </label>
+          <select
+            value={input.country}
+            onChange={(e) => update({ country: e.target.value as Country })}
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="england">
+              {
+                '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F'
+              }{' '}
+              England
+            </option>
+            <option value="scotland">
+              {
+                '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74\uDB40\uDC7F'
+              }{' '}
+              Scotland
+            </option>
+          </select>
+          {input.country === 'scotland' && (
+            <p className="mt-1 text-xs text-gray-500">
+              Scottish income tax rates apply. NI and student loans are UK-wide.
+            </p>
+          )}
+        </div>
+      </section>
+
       <section className="py-5 first:pt-0 last:pb-0">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Income</h2>
         <div className="space-y-3">

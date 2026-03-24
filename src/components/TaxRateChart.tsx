@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceDot,
 } from 'recharts';
+import { getIncomeTaxBands } from '~/lib/tax-rules';
 import type { TaxRules } from '~/lib/tax-rules';
 import {
   calculateTax,
@@ -108,11 +109,8 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     if (maxIncome <= 0) return [];
 
     // Tax boundaries with descriptions
-    const {
-      personalAllowance: pa,
-      incomeTax,
-      nationalInsurance: ni,
-    } = taxRules;
+    const { personalAllowance: pa, nationalInsurance: ni } = taxRules;
+    const itBands = getIncomeTaxBands(taxRules, input.country);
     const niBands = ni.employeeClass1.bands;
     const niUel = ni.employeeClass1.upperEarningsLimit;
     const niUpperRate = niBands.length > 1 ? niBands[1].rate : 0;
@@ -129,9 +127,9 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     ];
 
     // Income tax band thresholds (shifted by PA)
-    for (let i = 0; i < incomeTax.bands.length; i++) {
-      const band = incomeTax.bands[i];
-      const nextBand = incomeTax.bands[i + 1];
+    for (let i = 0; i < itBands.length; i++) {
+      const band = itBands[i];
+      const nextBand = itBands[i + 1];
       if (band.to !== null && nextBand) {
         boundaries.push({
           value: pa.amount + band.to,
@@ -146,7 +144,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       input,
       taxRules,
     ).marginal;
-    const lastBand = incomeTax.bands[incomeTax.bands.length - 1];
+    const lastBand = itBands[itBands.length - 1];
     boundaries.push(
       {
         value: pa.taperThreshold,

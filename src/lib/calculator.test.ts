@@ -12,6 +12,7 @@ const rules = getTaxRules('2025-26');
 
 function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
   return {
+    country: 'england',
     grossSalary: 0,
     bonus: 0,
     taxableBenefits: 0,
@@ -840,6 +841,148 @@ describe('2026/27 tax year', () => {
     );
     expect(r.undergraduateLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
     expect(r.postgraduateLoanRepayment).toBeCloseTo((30000 - 21000) * 0.06, 2);
+  });
+});
+
+// --- Scottish income tax ---
+
+describe('Scottish income tax', () => {
+  it('uses Scottish bands for £30,000 salary', () => {
+    const result = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 30000 }),
+      rules,
+    );
+
+    // Taxable: 30000 - 12570 = 17430
+    // Starter: 2827 * 0.19 = 537.13
+    // Basic: (14921-2827) * 0.20 = 12094 * 0.20 = 2418.80
+    // Intermediate: (17430-14921) * 0.21 = 2509 * 0.21 = 526.89
+    // Total: 3482.82
+    expect(result.incomeTax).toBeCloseTo(3482.82, 2);
+    // NI is same as England
+    expect(result.nationalInsurance).toBeCloseTo((30000 - 12570) * 0.08, 2);
+  });
+
+  it('uses Scottish bands for £75,000 salary', () => {
+    const result = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 75000 }),
+      rules,
+    );
+
+    // Taxable: 75000 - 12570 = 62430
+    // Starter: 2827 * 0.19 = 537.13
+    // Basic: 12094 * 0.20 = 2418.80
+    // Intermediate: (31092-14921) * 0.21 = 16171 * 0.21 = 3395.91
+    // Higher: (62430-31092) * 0.42 = 31338 * 0.42 = 13161.96
+    // Total: 19513.80
+    expect(result.incomeTax).toBeCloseTo(19513.8, 2);
+  });
+
+  it('uses Scottish top rate at £200,000', () => {
+    const result = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 200000 }),
+      rules,
+    );
+
+    // PA = 0, taxable = 200000
+    // Starter: 2827 * 0.19 = 537.13
+    // Basic: 12094 * 0.20 = 2418.80
+    // Intermediate: 16171 * 0.21 = 3395.91
+    // Higher: 31338 * 0.42 = 13161.96
+    // Advanced: (112570-62430) * 0.45 = 50140 * 0.45 = 22563.00
+    // Top: (200000-112570) * 0.48 = 87430 * 0.48 = 41966.40
+    // Total: 84043.20
+    expect(result.incomeTax).toBeCloseTo(84043.2, 2);
+  });
+
+  it('Scottish tax is higher than England at £75,000', () => {
+    const scottish = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 75000 }),
+      rules,
+    );
+    const english = calculateTax(
+      makeInput({ country: 'england', grossSalary: 75000 }),
+      rules,
+    );
+
+    expect(scottish.incomeTax).toBeGreaterThan(english.incomeTax);
+    // NI should be identical
+    expect(scottish.nationalInsurance).toBe(english.nationalInsurance);
+  });
+
+  it('PA tapering works the same in Scotland', () => {
+    const result = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 110000 }),
+      rules,
+    );
+    // PA reduced same as England
+    expect(result.personalAllowance).toBe(7570);
+  });
+
+  it('SIPP relief uses Scottish bands', () => {
+    const scottish = calculateTax(
+      makeInput({
+        country: 'scotland',
+        grossSalary: 80000,
+        sippContribution: 10000,
+      }),
+      rules,
+    );
+    const english = calculateTax(
+      makeInput({
+        country: 'england',
+        grossSalary: 80000,
+        sippContribution: 10000,
+      }),
+      rules,
+    );
+
+    // Different income tax bands → different SIPP relief
+    expect(scottish.sippRelief.totalRelief).not.toBe(
+      english.sippRelief.totalRelief,
+    );
+  });
+
+  it('student loans and NI unchanged in Scotland', () => {
+    const scottish = calculateTax(
+      makeInput({
+        country: 'scotland',
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const english = calculateTax(
+      makeInput({
+        country: 'england',
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+
+    expect(scottish.nationalInsurance).toBe(english.nationalInsurance);
+    expect(scottish.studentLoanRepayment).toBe(english.studentLoanRepayment);
+  });
+});
+
+// --- 2026/27 Scottish tax ---
+
+describe('2026/27 Scottish income tax', () => {
+  const rules2627 = getTaxRules('2026-27');
+
+  it('uses widened starter and basic bands for 2026/27', () => {
+    const r2627 = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 30000 }),
+      rules2627,
+    );
+    const r2526 = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 30000 }),
+      rules,
+    );
+
+    // 2026/27 has wider starter/basic bands → slightly less tax
+    expect(r2627.incomeTax).not.toBe(r2526.incomeTax);
   });
 });
 

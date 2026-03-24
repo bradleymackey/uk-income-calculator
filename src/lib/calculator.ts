@@ -1,6 +1,8 @@
-import type { TaxRules, UndergraduatePlanId } from './tax-rules';
+import type { TaxRules, UndergraduatePlanId, Country } from './tax-rules';
+import { getIncomeTaxBands } from './tax-rules';
 
 export interface CalculatorInput {
+  country: Country;
   grossSalary: number;
   bonus: number;
   taxableBenefits: number;
@@ -142,6 +144,7 @@ export function calculateSippRelief(
   sippContribution: number,
   incomeBeforeSipp: number,
   rules: TaxRules,
+  country: Country,
 ): CalculationResult['sippRelief'] {
   if (sippContribution <= 0) {
     return {
@@ -169,14 +172,15 @@ export function calculateSippRelief(
   );
   const taxableWithout = Math.max(0, incomeBeforeSipp - paWithout);
 
-  const taxWithSipp = calculateBandedTax(
-    taxableWithSipp,
-    rules.incomeTax.bands,
-  ).reduce((sum, b) => sum + b.tax, 0);
-  const taxWithout = calculateBandedTax(
-    taxableWithout,
-    rules.incomeTax.bands,
-  ).reduce((sum, b) => sum + b.tax, 0);
+  const bands = getIncomeTaxBands(rules, country);
+  const taxWithSipp = calculateBandedTax(taxableWithSipp, bands).reduce(
+    (sum, b) => sum + b.tax,
+    0,
+  );
+  const taxWithout = calculateBandedTax(taxableWithout, bands).reduce(
+    (sum, b) => sum + b.tax,
+    0,
+  );
 
   const totalRelief = taxWithout - taxWithSipp;
   const selfAssessmentRelief = Math.max(0, totalRelief - basicRateRelief);
@@ -214,7 +218,8 @@ function totalDeductionsAtSalary(
 
   const pa = calculatePersonalAllowance(adjusted, rules);
   const taxable = Math.max(0, adjusted - pa);
-  const tax = calculateBandedTax(taxable, rules.incomeTax.bands).reduce(
+  const incomeTaxBands = getIncomeTaxBands(rules, input.country);
+  const tax = calculateBandedTax(taxable, incomeTaxBands).reduce(
     (s, b) => s + b.tax,
     0,
   );
@@ -342,10 +347,8 @@ export function calculateTax(
   const taxableIncome = Math.max(0, adjustedNetIncome - personalAllowance);
 
   // 7. Income tax
-  const incomeTaxBands = calculateBandedTax(
-    taxableIncome,
-    rules.incomeTax.bands,
-  );
+  const activeBands = getIncomeTaxBands(rules, input.country);
+  const incomeTaxBands = calculateBandedTax(taxableIncome, activeBands);
   const incomeTax = incomeTaxBands.reduce((sum, b) => sum + b.tax, 0);
 
   // 8. National Insurance
@@ -376,6 +379,7 @@ export function calculateTax(
     sippContribution,
     totalGrossIncome - salarySacrificeDeduction,
     rules,
+    input.country,
   );
 
   // 11. Child benefit & HICBC
@@ -451,10 +455,10 @@ export function calculateTax(
     const payeAdjusted = payeGross - salarySacrificeDeduction;
     const payePA = calculatePersonalAllowance(payeAdjusted, rules);
     const payeTaxable = Math.max(0, payeAdjusted - payePA);
-    const payeIncomeTax = calculateBandedTax(
-      payeTaxable,
-      rules.incomeTax.bands,
-    ).reduce((sum, b) => sum + b.tax, 0);
+    const payeIncomeTax = calculateBandedTax(payeTaxable, activeBands).reduce(
+      (sum, b) => sum + b.tax,
+      0,
+    );
     const payeNI = calculateBandedTax(
       payeNiable,
       rules.nationalInsurance.employeeClass1.bands,
