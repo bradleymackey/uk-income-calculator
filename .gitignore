@@ -5,3 +5,4 @@ dist
 .tanstack
 src/routeTree.gen.ts
 *.local
+.claude/*.local.*
