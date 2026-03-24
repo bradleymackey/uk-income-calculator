@@ -157,17 +157,17 @@ export const Route = createFileRoute('/')({
         undefined,
       rsuVests: search.rsuVests ? Number(search.rsuVests) : undefined,
       pensionPct: search.pensionPct ? Number(search.pensionPct) : undefined,
-      pensionFixed: search.pensionFixed
-        ? Number(search.pensionFixed)
-        : undefined,
+      pensionFixed:
+        search.pensionFixed != null ? Number(search.pensionFixed) : undefined,
       pensionSS:
         search.pensionSS === true || search.pensionSS === 'true' || undefined,
       empPensionPct: search.empPensionPct
         ? Number(search.empPensionPct)
         : undefined,
-      empPensionFixed: search.empPensionFixed
-        ? Number(search.empPensionFixed)
-        : undefined,
+      empPensionFixed:
+        search.empPensionFixed != null
+          ? Number(search.empPensionFixed)
+          : undefined,
       pensionFixedPer: search.pensionFixedPer as string | undefined,
       niPassback: search.niPassback ? Number(search.niPassback) : undefined,
       otherSS: search.otherSS ? Number(search.otherSS) : undefined,
