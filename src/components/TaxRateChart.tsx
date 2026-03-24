@@ -27,17 +27,15 @@ interface DataPoint {
   income: number;
   marginal: number;
   effective: number;
+  label?: string;
 }
 
 function computeRatesAtIncome(
   targetGross: number,
   baseInput: CalculatorInput,
   rules: TaxRules,
+  label?: string,
 ): DataPoint {
-  // Show the underlying tax system rates (tax + NI + student loan) without
-  // pension/SIPP distortion. Pension is a personal choice, not a tax — it
-  // shouldn't shift the rate curves. Student loan IS included since it's a
-  // mandatory deduction based on income.
   const r = calculateTax(
     {
       ...baseInput,
@@ -63,12 +61,39 @@ function computeRatesAtIncome(
     income: targetGross,
     marginal: r.marginalRate * 100,
     effective,
+    label,
   };
 }
 
 function formatIncome(value: number): string {
-  if (value >= 1000) return `£${(value / 1000).toFixed(0)}k`;
-  return `£${value}`;
+  if (value >= 1000) {
+    const k = value / 1000;
+    return k === Math.floor(k) ? `£${k}k` : `£${k.toFixed(1)}k`;
+  }
+  return `£${value.toLocaleString()}`;
+}
+
+function formatIncomeExact(value: number): string {
+  return `£${value.toLocaleString()}`;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const point = payload[0]?.payload as DataPoint | undefined;
+  if (!point) return null;
+
+  return (
+    <div className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-gray-900">
+        {formatIncomeExact(point.income)}
+      </p>
+      {point.label && <p className="mb-1 text-gray-500">{point.label}</p>}
+      <p className="text-red-500">Marginal: {point.marginal.toFixed(1)}%</p>
+      <p className="text-blue-500">Effective: {point.effective.toFixed(1)}%</p>
+    </div>
+  );
 }
 
 export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
@@ -81,64 +106,130 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     const maxIncome = totalGross;
     if (maxIncome <= 0) return [];
 
-    // Tax system boundaries — these always take priority
-    const boundaries = new Set<number>([
-      0,
-      taxRules.personalAllowance.amount, // 12570
-      taxRules.personalAllowance.amount + taxRules.incomeTax.bands[0].to!, // 50270 (PA + basic rate band)
-      taxRules.personalAllowance.taperThreshold, // 100000
-      taxRules.personalAllowance.taperThreshold +
-        taxRules.personalAllowance.amount * 2, // 125140
-      taxRules.nationalInsurance.employeeClass1.primaryThreshold,
-      taxRules.nationalInsurance.employeeClass1.upperEarningsLimit,
-    ]);
-    for (const band of taxRules.incomeTax.bands) {
-      if (band.to !== null) {
-        boundaries.add(taxRules.personalAllowance.amount + band.to);
-      }
-    }
+    // Tax boundaries with descriptions
+    const boundaries: { value: number; label: string }[] = [
+      {
+        value: taxRules.personalAllowance.amount,
+        label: 'Personal allowance — income tax and NI start',
+      },
+      {
+        value: taxRules.nationalInsurance.employeeClass1.upperEarningsLimit,
+        label: 'NI upper earnings limit — NI drops to 2%',
+      },
+      {
+        value:
+          taxRules.personalAllowance.amount + taxRules.incomeTax.bands[0].to!,
+        label: 'Higher rate threshold — income tax rises to 40%',
+      },
+      {
+        value: taxRules.personalAllowance.taperThreshold,
+        label: 'PA taper starts — effective 60% marginal rate',
+      },
+      {
+        value:
+          taxRules.personalAllowance.taperThreshold +
+          taxRules.personalAllowance.amount * 2,
+        label: 'PA fully tapered — additional rate begins',
+      },
+    ];
 
-    // Student loan thresholds (only for selected plans)
+    // Student loan thresholds
     if (input.undergraduatePlan !== 'none') {
       const plan = taxRules.studentLoans[input.undergraduatePlan];
-      if (plan) boundaries.add(plan.threshold);
+      if (plan) {
+        boundaries.push({
+          value: plan.threshold,
+          label: `${plan.label} threshold — ${(plan.rate * 100).toFixed(0)}% repayment starts`,
+        });
+      }
     }
     if (input.hasPostgraduateLoan) {
       const pg = taxRules.studentLoans['postgraduate'];
-      if (pg) boundaries.add(pg.threshold);
+      if (pg) {
+        boundaries.push({
+          value: pg.threshold,
+          label: `${pg.label} threshold — ${(pg.rate * 100).toFixed(0)}% repayment starts`,
+        });
+      }
     }
 
-    // Round-number increments for smooth chart display
+    const boundaryValues = new Set(boundaries.map((b) => b.value));
+
+    // Round-number increments
     const increments: number[] = [];
     for (let i = 5000; i <= 200000; i += 5000) increments.push(i);
     for (let i = 250000; i <= 500000; i += 50000) increments.push(i);
 
-    // Deduplicate: drop round numbers that are within £2000 of a boundary
+    // Drop round numbers within £2k of a boundary
     const MIN_GAP = 2000;
-    const boundaryArr = [...boundaries];
+    const boundaryArr = [...boundaryValues];
     const filtered = increments.filter(
       (inc) =>
         !boundaryArr.some((b) => Math.abs(inc - b) < MIN_GAP && inc !== b),
     );
 
-    // Combine boundaries + filtered increments + user's gross
-    const allPoints = new Set([...boundaries, ...filtered]);
-    allPoints.add(Math.round(maxIncome));
-
+    // Build data points
     const points: DataPoint[] = [];
-    for (const t of allPoints) {
-      if (t <= maxIncome && t >= 0) {
-        points.push(computeRatesAtIncome(t, input, taxRules));
+    const added = new Set<number>();
+
+    // Always add 0
+    points.push(computeRatesAtIncome(0, input, taxRules));
+    added.add(0);
+
+    // Add boundaries
+    for (const b of boundaries) {
+      if (b.value <= maxIncome && b.value > 0 && !added.has(b.value)) {
+        points.push(computeRatesAtIncome(b.value, input, taxRules, b.label));
+        added.add(b.value);
+      }
+    }
+
+    // Add filtered increments
+    for (const inc of filtered) {
+      if (inc <= maxIncome && !added.has(inc)) {
+        points.push(computeRatesAtIncome(inc, input, taxRules));
+        added.add(inc);
+      }
+    }
+
+    // Add user's gross
+    const roundedMax = Math.round(maxIncome);
+    if (!added.has(roundedMax)) {
+      points.push(
+        computeRatesAtIncome(roundedMax, input, taxRules, 'Your income'),
+      );
+      added.add(roundedMax);
+    } else {
+      // Tag existing point
+      const existing = points.find((p) => p.income === roundedMax);
+      if (existing) {
+        existing.label = existing.label
+          ? `${existing.label} (your income)`
+          : 'Your income';
       }
     }
 
     points.sort((a, b) => a.income - b.income);
+
+    // Build XAxis ticks: boundaries + a selection of round numbers
     return points;
   }, [totalGross, input, taxRules]);
 
+  const ticks = useMemo(() => {
+    if (data.length === 0) return [];
+    // Show boundary points and some round numbers on the axis
+    const boundaryTicks = data.filter((d) => d.label).map((d) => d.income);
+    // Add a few round ticks for scale
+    const roundTicks = data
+      .filter((d) => !d.label && d.income > 0 && d.income % 25000 === 0)
+      .map((d) => d.income);
+    return [...new Set([...boundaryTicks, ...roundTicks])].sort(
+      (a, b) => a - b,
+    );
+  }, [data]);
+
   if (!mounted || totalGross <= 0 || data.length === 0) return null;
 
-  // Dots use the same pension-free calculation as the curves
   const userPoint = data.find((d) => d.income === Math.round(totalGross));
   const userMarginal = userPoint?.marginal ?? 0;
   const userEffective = userPoint?.effective ?? 0;
@@ -160,7 +251,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       <p className="mb-2 text-xs font-medium text-gray-500">
         Tax rate by income
       </p>
-      <div style={{ width: '100%', height: 180 }}>
+      <div style={{ width: '100%', height: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}
@@ -171,9 +262,10 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
               dataKey="income"
               type="number"
               tickFormatter={formatIncome}
-              tick={{ fontSize: 10, fill: '#6b7280' }}
+              tick={{ fontSize: 9, fill: '#6b7280' }}
               stroke="#d1d5db"
               domain={[0, Math.round(totalGross)]}
+              ticks={ticks}
             />
             <YAxis
               tickFormatter={(v) => `${v}%`}
@@ -181,18 +273,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
               stroke="#d1d5db"
               domain={[0, yMax]}
             />
-            <Tooltip
-              formatter={(value, name) => [
-                `${Number(value).toFixed(1)}%`,
-                name === 'marginal' ? 'Marginal rate' : 'Effective rate',
-              ]}
-              labelFormatter={(label) => formatIncome(label as number)}
-              contentStyle={{
-                fontSize: 12,
-                borderRadius: 6,
-                border: '1px solid #e5e7eb',
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Line
               type="stepAfter"
               dataKey="marginal"
