@@ -1,8 +1,11 @@
 import type { CalculationResult } from '~/lib/calculator';
+import type { TaxRules } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
+import { TaxRateChart } from './TaxRateChart';
 
 interface ResultsBreakdownProps {
   result: CalculationResult;
+  taxRules: TaxRules;
 }
 
 function Row({
@@ -70,7 +73,7 @@ function BandTable({
   );
 }
 
-export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
+export function ResultsBreakdown({ result, taxRules }: ResultsBreakdownProps) {
   return (
     <div className="space-y-5">
       {/* Summary card */}
@@ -113,9 +116,21 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
             label="Personal allowance remaining"
             value={formatCurrency(result.personalAllowance)}
           />
+          <Row
+            label="Adjusted net income"
+            value={formatCurrency(result.adjustedNetIncome)}
+          />
+          {result.adjustedNetIncome <= 100000 && (
+            <p className="text-xs text-gray-500">
+              {formatCurrency(100000 - result.adjustedNetIncome)} below the
+              £100k taper threshold
+            </p>
+          )}
           {result.personalAllowance < 12570 && result.personalAllowance > 0 && (
             <p className="text-xs text-amber-600">
-              Tapered from £12,570 due to income over £100,000
+              In the £100k–£125,140 taper zone — 60% marginal rate.{' '}
+              {formatCurrency(125140 - result.adjustedNetIncome)} until fully
+              tapered.
             </p>
           )}
           {result.personalAllowance === 0 &&
@@ -125,6 +140,12 @@ export function ResultsBreakdown({ result }: ResultsBreakdownProps) {
               </p>
             )}
         </div>
+        <TaxRateChart
+          adjustedNetIncome={result.adjustedNetIncome}
+          marginalRate={result.marginalRate}
+          effectiveRate={result.effectiveRate}
+          taxRules={taxRules}
+        />
         {result.rsuVests > 0 && (
           <>
             <div className="my-2 border-t border-blue-200" />

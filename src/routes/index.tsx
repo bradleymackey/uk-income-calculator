@@ -61,7 +61,7 @@ function HomePage() {
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
               Take-Home Pay Breakdown
             </h2>
-            <ResultsBreakdown result={result} />
+            <ResultsBreakdown result={result} taxRules={rules} />
           </div>
         </div>
       </div>
