@@ -48,14 +48,14 @@ function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">
-              UK Income Tax Calculator
-            </h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            UK Income Tax Calculator
+          </h1>
+          <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
             <select
               value={taxYear}
               onChange={(e) => setTaxYear(e.target.value)}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -63,10 +63,8 @@ function HomePage() {
                 </option>
               ))}
             </select>
+            <span>Tax Year &middot; HMRC rates</span>
           </div>
-          <p className="mt-1 text-gray-500">
-            {rules.label} Tax Year &middot; HMRC rates
-          </p>
         </header>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
