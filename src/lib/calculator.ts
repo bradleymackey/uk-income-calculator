@@ -18,6 +18,7 @@ export interface CalculatorInput {
   };
   employerNiPassbackPercent: number;
   sippContribution: number;
+  sippInputType: 'gross' | 'net';
   undergraduatePlan: UndergraduatePlanId;
   hasPostgraduateLoan: boolean;
 }
@@ -192,7 +193,10 @@ function totalDeductionsAtSalary(
       ? (salary * input.pensionContribution.value) / 100
       : input.pensionContribution.value;
   const ssDeduction = input.pensionContribution.salarySacrifice ? pension : 0;
-  const sipp = input.sippContribution;
+  const sipp =
+    input.sippInputType === 'net'
+      ? input.sippContribution / 0.8
+      : input.sippContribution;
 
   const gross = salary + input.bonus + input.taxableBenefits + input.rsuVests;
   const niable = salary + input.bonus + input.rsuVests - ssDeduction;
@@ -276,7 +280,12 @@ export function calculateTax(
   const employerNiPassback =
     employerNiSaving * (input.employerNiPassbackPercent / 100);
 
-  const sippContribution = input.sippContribution;
+  // Resolve SIPP to gross: if user entered net (what they transferred),
+  // gross = net / 0.8 (provider claims 20% basic rate relief on top)
+  const sippContribution =
+    input.sippInputType === 'net'
+      ? input.sippContribution / 0.8
+      : input.sippContribution;
 
   // 2. Total gross income
   const totalGrossIncome = grossSalary + bonus + taxableBenefits + rsuVests;

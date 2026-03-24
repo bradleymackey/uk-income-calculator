@@ -27,6 +27,7 @@ const defaultInput: CalculatorInput = {
   },
   employerNiPassbackPercent: 0,
   sippContribution: 0,
+  sippInputType: 'gross',
   undergraduatePlan: 'none',
   hasPostgraduateLoan: false,
 };

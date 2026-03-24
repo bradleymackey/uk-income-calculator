@@ -29,6 +29,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     },
     employerNiPassbackPercent: 0,
     sippContribution: 0,
+    sippInputType: 'gross',
     undergraduatePlan: 'none',
     hasPostgraduateLoan: false,
     ...overrides,
@@ -253,6 +254,33 @@ describe('calculateTax', () => {
     expect(result.incomeTax).toBeCloseTo(6486, 2);
     // NI unchanged
     expect(result.nationalInsurance).toBeCloseTo(2994.4, 2);
+  });
+
+  it('converts net SIPP input to gross', () => {
+    // £4000 net = £5000 gross (4000 / 0.8)
+    const netInput = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        sippContribution: 4000,
+        sippInputType: 'net',
+      }),
+      rules,
+    );
+    const grossInput = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        sippContribution: 5000,
+        sippInputType: 'gross',
+      }),
+      rules,
+    );
+
+    expect(netInput.sippContribution).toBeCloseTo(5000, 2);
+    expect(netInput.incomeTax).toBeCloseTo(grossInput.incomeTax, 2);
+    expect(netInput.adjustedNetIncome).toBeCloseTo(
+      grossInput.adjustedNetIncome,
+      2,
+    );
   });
 
   it('calculates SIPP relief for basic rate taxpayer', () => {

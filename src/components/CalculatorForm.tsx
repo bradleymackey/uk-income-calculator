@@ -106,7 +106,7 @@ export function CalculatorForm({
       employerPension: {
         employerPensionContribution: { type: 'percentage', value: 0 },
       },
-      sipp: { sippContribution: 0 },
+      sipp: { sippContribution: 0, sippInputType: 'gross' as const },
       studentLoan: {
         undergraduatePlan: 'none',
         hasPostgraduateLoan: false,
@@ -358,15 +358,39 @@ export function CalculatorForm({
           {isVisible('sipp') && (
             <>
               <FieldHeader label="SIPP" onRemove={() => hide('sipp')} />
-              <InputField
-                label="SIPP contribution (gross annual)"
-                value={input.sippContribution || ''}
-                onChange={(v) =>
-                  update({ sippContribution: parseFloat(v) || 0 })
-                }
-                prefix="£"
-                tooltip="Enter the gross amount you want to contribute. You pay 80% and your provider claims 20% basic rate relief from HMRC. Higher/additional rate relief is claimed via self-assessment."
-              />
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <InputField
+                    label={
+                      input.sippInputType === 'net'
+                        ? 'SIPP contribution (amount you pay)'
+                        : 'SIPP contribution (gross annual)'
+                    }
+                    value={input.sippContribution || ''}
+                    onChange={(v) =>
+                      update({ sippContribution: parseFloat(v) || 0 })
+                    }
+                    prefix="£"
+                    tooltip={
+                      input.sippInputType === 'net'
+                        ? 'The amount you actually transfer to your SIPP provider. They will claim 20% basic rate relief on top, making the gross contribution 25% higher.'
+                        : 'The total contribution including basic rate relief. You pay 80% of this and your provider claims the remaining 20% from HMRC.'
+                    }
+                  />
+                </div>
+                <select
+                  value={input.sippInputType}
+                  onChange={(e) =>
+                    update({
+                      sippInputType: e.target.value as 'gross' | 'net',
+                    })
+                  }
+                  className="mb-[1px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="gross">Gross</option>
+                  <option value="net">Net (paid)</option>
+                </select>
+              </div>
             </>
           )}
         </div>
