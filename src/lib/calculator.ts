@@ -81,7 +81,6 @@ export interface CalculationResult {
   netAnnualPay: number;
   netMonthlyPay: number;
   payeMonthlyPay: number | null;
-  payeMonthlyAdjusted: number | null;
   vestMonthTotal: number | null;
   effectiveRate: number;
   marginalRate: number;
@@ -418,46 +417,10 @@ export function calculateTax(
     payeMonthlyPay = payeAnnual / 12;
   }
 
-  // When withholding is OFF, HMRC adjusts tax code to collect RSU tax from
-  // every payslip. Recalculate tax on full income (inc RSUs) but without SIPP
-  // (SIPP is paid personally after receiving payslip, not via PAYE).
-  let payeMonthlyAdjusted: number | null = null;
-  if (rsuVests > 0 && !input.rsuTaxWithheld) {
-    const adjGross = totalGrossIncome - salarySacrificeDeduction;
-    const adjPA = calculatePersonalAllowance(adjGross, rules);
-    const adjTaxable = Math.max(0, adjGross - adjPA);
-    const adjIncomeTax = calculateBandedTax(
-      adjTaxable,
-      rules.incomeTax.bands,
-    ).reduce((sum, b) => sum + b.tax, 0);
-    const adjNiable = grossSalary + bonus + rsuVests - salarySacrificeDeduction;
-    const adjNI = calculateBandedTax(
-      adjNiable,
-      rules.nationalInsurance.employeeClass1.bands,
-    ).reduce((sum, b) => sum + b.tax, 0);
-    const adjStudentLoan =
-      (input.undergraduatePlan !== 'none'
-        ? calculateStudentLoanForPlan(adjNiable, input.undergraduatePlan, rules)
-        : 0) +
-      (input.hasPostgraduateLoan
-        ? calculateStudentLoanForPlan(adjNiable, 'postgraduate', rules)
-        : 0);
-    const adjustedPayeAnnual =
-      grossSalary +
-      bonus -
-      adjIncomeTax -
-      adjNI -
-      adjStudentLoan -
-      pensionContribution;
-    payeMonthlyAdjusted = adjustedPayeAnnual / 12;
-  }
-
   // Total received in a vest month: payslip + per-vest RSU net
   const vestMonthTotal =
     rsuPerVest && payeMonthlyPay !== null
-      ? (input.rsuTaxWithheld
-          ? payeMonthlyPay
-          : (payeMonthlyAdjusted ?? payeMonthlyPay)) + rsuPerVest.netPerVest
+      ? payeMonthlyPay + rsuPerVest.netPerVest
       : null;
 
   // Effective tax rate
@@ -505,7 +468,6 @@ export function calculateTax(
     netAnnualPay,
     netMonthlyPay,
     payeMonthlyPay,
-    payeMonthlyAdjusted,
     vestMonthTotal,
     effectiveRate,
     marginalRate,

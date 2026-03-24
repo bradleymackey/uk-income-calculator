@@ -190,33 +190,15 @@ export function ResultsBreakdown({
               Monthly payslip
             </p>
             <div className="text-sm">
-              {result.rsuWithholding ? (
-                <>
-                  <Row
-                    label="PAYE payslip"
-                    value={formatCurrency(result.payeMonthlyPay)}
-                    bold
-                    highlight="green"
-                  />
-                  <p className="mt-0.5 text-xs text-blue-600">
-                    Tax on salary only — RSU tax covered by withholding
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Row
-                    label="PAYE payslip (tax code adjusted)"
-                    value={formatCurrency(result.payeMonthlyAdjusted!)}
-                    bold
-                    highlight="green"
-                  />
-                  <p className="mt-0.5 text-xs text-blue-600">
-                    Lower than salary-only (
-                    {formatCurrency(result.payeMonthlyPay)}/mo) because HMRC
-                    collects RSU tax via your tax code
-                  </p>
-                </>
-              )}
+              <Row
+                label="Monthly payslip"
+                value={formatCurrency(result.payeMonthlyPay)}
+                bold
+                highlight="green"
+              />
+              <p className="mt-0.5 text-xs text-blue-600">
+                Non-vesting month — tax calculated on salary only
+              </p>
               {result.vestMonthTotal !== null && result.rsuPerVest && (
                 <>
                   <div className="my-1 border-t border-blue-200" />

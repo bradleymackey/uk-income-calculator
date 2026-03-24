@@ -375,32 +375,7 @@ describe('calculateTax', () => {
     expect(withSipp.payeMonthlyPay).toBeCloseTo(withoutSipp.payeMonthlyPay!, 2);
   });
 
-  it('SIPP does not affect adjusted payslip (withholding off)', () => {
-    const withSipp = calculateTax(
-      makeInput({
-        grossSalary: 50000,
-        rsuVests: 10000,
-        rsuTaxWithheld: false,
-        sippContribution: 5000,
-      }),
-      rules,
-    );
-    const withoutSipp = calculateTax(
-      makeInput({
-        grossSalary: 50000,
-        rsuVests: 10000,
-        rsuTaxWithheld: false,
-      }),
-      rules,
-    );
-
-    expect(withSipp.payeMonthlyAdjusted).toBeCloseTo(
-      withoutSipp.payeMonthlyAdjusted!,
-      2,
-    );
-  });
-
-  it('vest month total = payslip + per-vest RSU net (withholding on)', () => {
+  it('vest month total = payslip + per-vest RSU net', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 50000,
@@ -411,8 +386,6 @@ describe('calculateTax', () => {
       rules,
     );
 
-    // With withholding, payslip is salary-only
-    // Vest month = payslip + RSU net per vest
     const perVestNet = (20000 * 0.53) / 4;
     expect(result.vestMonthTotal).toBeCloseTo(
       result.payeMonthlyPay! + perVestNet,
@@ -420,24 +393,26 @@ describe('calculateTax', () => {
     );
   });
 
-  it('shows adjusted payslip when withholding is off', () => {
-    const result = calculateTax(
+  it('payslip is same regardless of RSU withholding setting', () => {
+    const withholding = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        rsuVests: 20000,
+        rsuTaxWithheld: true,
+      }),
+      rules,
+    );
+    const noWithholding = calculateTax(
       makeInput({
         grossSalary: 50000,
         rsuVests: 20000,
         rsuTaxWithheld: false,
-        rsuVestingPeriodsPerYear: 4,
       }),
       rules,
     );
 
-    // Without withholding, HMRC adjusts tax code — payslip is lower
-    expect(result.payeMonthlyAdjusted).not.toBeNull();
-    expect(result.payeMonthlyAdjusted!).toBeLessThan(result.payeMonthlyPay!);
-    // Vest month = adjusted payslip + full RSU per vest (no withholding)
-    const perVestGross = 20000 / 4;
-    expect(result.vestMonthTotal).toBeCloseTo(
-      result.payeMonthlyAdjusted! + perVestGross,
+    expect(withholding.payeMonthlyPay).toBeCloseTo(
+      noWithholding.payeMonthlyPay!,
       2,
     );
   });
