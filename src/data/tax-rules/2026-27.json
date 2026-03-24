@@ -1,0 +1,51 @@
+{
+  "taxYear": "2026-27",
+  "label": "2026/27",
+  "personalAllowance": {
+    "amount": 12570,
+    "taperThreshold": 100000,
+    "taperRate": 0.5
+  },
+  "incomeTax": {
+    "bands": [
+      { "name": "Basic rate", "rate": 0.2, "from": 0, "to": 37700 },
+      { "name": "Higher rate", "rate": 0.4, "from": 37700, "to": 125140 },
+      { "name": "Additional rate", "rate": 0.45, "from": 125140, "to": null }
+    ]
+  },
+  "nationalInsurance": {
+    "employerClass1": {
+      "secondaryThreshold": 5000,
+      "rate": 0.15
+    },
+    "employeeClass1": {
+      "primaryThreshold": 12570,
+      "upperEarningsLimit": 50270,
+      "bands": [
+        {
+          "name": "Main rate",
+          "rate": 0.08,
+          "from": 12570,
+          "to": 50270
+        },
+        {
+          "name": "Upper rate",
+          "rate": 0.02,
+          "from": 50270,
+          "to": null
+        }
+      ]
+    }
+  },
+  "studentLoans": {
+    "plan1": { "label": "Plan 1", "threshold": 26900, "rate": 0.09 },
+    "plan2": { "label": "Plan 2", "threshold": 29385, "rate": 0.09 },
+    "plan4": { "label": "Plan 4 (Scotland)", "threshold": 33795, "rate": 0.09 },
+    "plan5": { "label": "Plan 5", "threshold": 25000, "rate": 0.09 },
+    "postgraduate": {
+      "label": "Postgraduate Loan",
+      "threshold": 21000,
+      "rate": 0.06
+    }
+  }
+}

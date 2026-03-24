@@ -1,4 +1,5 @@
 import taxRules202526 from '~/data/tax-rules/2025-26.json';
+import taxRules202627 from '~/data/tax-rules/2026-27.json';
 
 export interface TaxBand {
   name: string;
@@ -49,9 +50,10 @@ export interface TaxRules {
 
 const taxRulesMap: Record<string, TaxRules> = {
   '2025-26': taxRules202526 as TaxRules,
+  '2026-27': taxRules202627 as TaxRules,
 };
 
-export const DEFAULT_TAX_YEAR = '2025-26';
+export const DEFAULT_TAX_YEAR = '2026-27';
 
 export function getTaxRules(taxYear: string = DEFAULT_TAX_YEAR): TaxRules {
   const rules = taxRulesMap[taxYear];

@@ -3,7 +3,11 @@ import { useMemo, useState } from 'react';
 import { CalculatorForm } from '~/components/CalculatorForm';
 import { ResultsBreakdown } from '~/components/ResultsBreakdown';
 import { calculateTax, type CalculatorInput } from '~/lib/calculator';
-import { getTaxRules } from '~/lib/tax-rules';
+import {
+  getTaxRules,
+  getAvailableTaxYears,
+  DEFAULT_TAX_YEAR,
+} from '~/lib/tax-rules';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -34,7 +38,9 @@ const defaultInput: CalculatorInput = {
 
 function HomePage() {
   const [input, setInput] = useState<CalculatorInput>(defaultInput);
-  const rules = getTaxRules('2025-26');
+  const [taxYear, setTaxYear] = useState(DEFAULT_TAX_YEAR);
+  const availableYears = getAvailableTaxYears();
+  const rules = getTaxRules(taxYear);
 
   const result = useMemo(() => calculateTax(input, rules), [input, rules]);
 
@@ -42,9 +48,22 @@ function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            UK Income Tax Calculator
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-900">
+              UK Income Tax Calculator
+            </h1>
+            <select
+              value={taxYear}
+              onChange={(e) => setTaxYear(e.target.value)}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {getTaxRules(year).label}
+                </option>
+              ))}
+            </select>
+          </div>
           <p className="mt-1 text-gray-500">
             {rules.label} Tax Year &middot; HMRC rates
           </p>

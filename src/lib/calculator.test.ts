@@ -784,3 +784,60 @@ describe('calculateTax', () => {
     expect(result.marginalRate).toBeCloseTo(0.43, 2);
   });
 });
+
+// --- 2026/27 tax year ---
+
+describe('2026/27 tax year', () => {
+  const rules2627 = getTaxRules('2026-27');
+
+  it('income tax unchanged from 2025/26', () => {
+    const r = calculateTax(makeInput({ grossSalary: 50000 }), rules2627);
+    expect(r.personalAllowance).toBe(12570);
+    expect(r.incomeTax).toBeCloseTo(7486, 2);
+    expect(r.nationalInsurance).toBeCloseTo(2994.4, 2);
+  });
+
+  it('Plan 1 threshold increased to £26,900', () => {
+    const r = calculateTax(
+      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan1' }),
+      rules2627,
+    );
+    expect(r.studentLoanRepayment).toBeCloseTo((30000 - 26900) * 0.09, 2);
+  });
+
+  it('Plan 2 threshold increased to £29,385', () => {
+    // £29,000 is below 2026/27 threshold but above 2025/26 threshold
+    const r2627 = calculateTax(
+      makeInput({ grossSalary: 29000, undergraduatePlan: 'plan2' }),
+      rules2627,
+    );
+    const r2526 = calculateTax(
+      makeInput({ grossSalary: 29000, undergraduatePlan: 'plan2' }),
+      rules,
+    );
+    // No repayment in 2026/27 (below £29,385), but repayment in 2025/26 (above £28,470)
+    expect(r2627.studentLoanRepayment).toBe(0);
+    expect(r2526.studentLoanRepayment).toBeGreaterThan(0);
+  });
+
+  it('Plan 4 threshold increased to £33,795', () => {
+    const r = calculateTax(
+      makeInput({ grossSalary: 35000, undergraduatePlan: 'plan4' }),
+      rules2627,
+    );
+    expect(r.studentLoanRepayment).toBeCloseTo((35000 - 33795) * 0.09, 2);
+  });
+
+  it('Plan 5 and Postgrad thresholds unchanged', () => {
+    const r = calculateTax(
+      makeInput({
+        grossSalary: 30000,
+        undergraduatePlan: 'plan5',
+        hasPostgraduateLoan: true,
+      }),
+      rules2627,
+    );
+    expect(r.undergraduateLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
+    expect(r.postgraduateLoanRepayment).toBeCloseTo((30000 - 21000) * 0.06, 2);
+  });
+});
