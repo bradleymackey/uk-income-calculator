@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router';
+import '~/styles/app.css';
 
 export const Route = createRootRoute({
   head: () => ({
@@ -13,12 +14,6 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'color-scheme', content: 'light dark' },
       { title: 'UK Income Tax Calculator' },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: '/src/styles/app.css',
-      },
     ],
   }),
   component: RootComponent,
