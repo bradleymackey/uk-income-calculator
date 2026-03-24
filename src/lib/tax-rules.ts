@@ -1,3 +1,8 @@
+import taxRules202021 from '~/data/tax-rules/2020-21.json';
+import taxRules202122 from '~/data/tax-rules/2021-22.json';
+import taxRules202223 from '~/data/tax-rules/2022-23.json';
+import taxRules202324 from '~/data/tax-rules/2023-24.json';
+import taxRules202425 from '~/data/tax-rules/2024-25.json';
 import taxRules202526 from '~/data/tax-rules/2025-26.json';
 import taxRules202627 from '~/data/tax-rules/2026-27.json';
 
@@ -29,6 +34,8 @@ export type UndergraduatePlanId =
 
 export type Country = 'england' | 'scotland';
 
+export type NiCategory = 'A' | 'C';
+
 export interface ChildBenefitRules {
   weeklyRateFirstChild: number;
   weeklyRateAdditionalChild: number;
@@ -43,6 +50,7 @@ export interface TaxRules {
   taxYear: string;
   label: string;
   personalAllowance: PersonalAllowance;
+  blindPersonsAllowance: number;
   incomeTax: {
     bands: TaxBand[];
   };
@@ -65,6 +73,11 @@ export interface TaxRules {
 }
 
 const taxRulesMap: Record<string, TaxRules> = {
+  '2020-21': taxRules202021 as TaxRules,
+  '2021-22': taxRules202122 as TaxRules,
+  '2022-23': taxRules202223 as TaxRules,
+  '2023-24': taxRules202324 as TaxRules,
+  '2024-25': taxRules202425 as TaxRules,
   '2025-26': taxRules202526 as TaxRules,
   '2026-27': taxRules202627 as TaxRules,
 };

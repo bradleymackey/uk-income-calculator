@@ -1,0 +1,69 @@
+{
+  "taxYear": "2020-21",
+  "label": "2020/21",
+  "personalAllowance": {
+    "amount": 12500,
+    "taperThreshold": 100000,
+    "taperRate": 0.5
+  },
+  "blindPersonsAllowance": 2500,
+  "incomeTax": {
+    "bands": [
+      { "name": "Basic rate", "rate": 0.2, "from": 0, "to": 37500 },
+      { "name": "Higher rate", "rate": 0.4, "from": 37500, "to": 150000 },
+      { "name": "Additional rate", "rate": 0.45, "from": 150000, "to": null }
+    ]
+  },
+  "scottishIncomeTax": {
+    "bands": [
+      { "name": "Starter rate", "rate": 0.19, "from": 0, "to": 2085 },
+      { "name": "Basic rate", "rate": 0.2, "from": 2085, "to": 12658 },
+      { "name": "Intermediate rate", "rate": 0.21, "from": 12658, "to": 30930 },
+      { "name": "Higher rate", "rate": 0.41, "from": 30930, "to": 150000 },
+      { "name": "Top rate", "rate": 0.46, "from": 150000, "to": null }
+    ]
+  },
+  "nationalInsurance": {
+    "employerClass1": {
+      "secondaryThreshold": 8788,
+      "rate": 0.138
+    },
+    "employeeClass1": {
+      "primaryThreshold": 9500,
+      "upperEarningsLimit": 50000,
+      "bands": [
+        {
+          "name": "Main rate",
+          "rate": 0.12,
+          "from": 9500,
+          "to": 50000
+        },
+        {
+          "name": "Upper rate",
+          "rate": 0.02,
+          "from": 50000,
+          "to": null
+        }
+      ]
+    }
+  },
+  "childBenefit": {
+    "weeklyRateFirstChild": 21.05,
+    "weeklyRateAdditionalChild": 13.95,
+    "weeksPerYear": 52,
+    "hicbc": {
+      "threshold": 50000,
+      "upperThreshold": 60000
+    }
+  },
+  "studentLoans": {
+    "plan1": { "label": "Plan 1", "threshold": 19390, "rate": 0.09 },
+    "plan2": { "label": "Plan 2", "threshold": 26575, "rate": 0.09 },
+    "plan4": { "label": "Plan 4 (Scotland)", "threshold": 25000, "rate": 0.09 },
+    "postgraduate": {
+      "label": "Postgraduate Loan",
+      "threshold": 21000,
+      "rate": 0.06
+    }
+  }
+}
