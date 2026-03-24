@@ -540,4 +540,247 @@ describe('calculateTax', () => {
     expect(result.incomeTax).toBe(0);
     expect(result.nationalInsurance).toBe(0);
   });
+
+  // --- Additional rate ---
+
+  it('calculates additional rate at £150,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 150000 }), rules);
+
+    expect(result.personalAllowance).toBe(0);
+    // Basic: 37700 * 0.20 = 7540
+    // Higher: (125140-37700) * 0.40 = 87440 * 0.40 = 34976
+    // Additional: (150000-125140) * 0.45 = 24860 * 0.45 = 11187
+    expect(result.incomeTax).toBeCloseTo(53703, 2);
+    // NI: (50270-12570)*0.08 + (150000-50270)*0.02 = 3016 + 1994.60
+    expect(result.nationalInsurance).toBeCloseTo(5010.6, 2);
+    expect(result.netAnnualPay).toBeCloseTo(91286.4, 2);
+  });
+
+  it('calculates additional rate at £200,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 200000 }), rules);
+
+    // Tax: 7540 + 34976 + (200000-125140)*0.45 = 7540 + 34976 + 33687
+    expect(result.incomeTax).toBeCloseTo(76203, 2);
+    expect(result.nationalInsurance).toBeCloseTo(6010.6, 2);
+  });
+
+  // --- PA taper zone ---
+
+  it('tapers PA at £110,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 110000 }), rules);
+
+    // PA reduced by floor((110000-100000)*0.5) = 5000
+    expect(result.personalAllowance).toBe(7570);
+    // Taxable: 110000-7570 = 102430
+    // Basic: 37700*0.20=7540, Higher: 64730*0.40=25892
+    expect(result.incomeTax).toBeCloseTo(33432, 2);
+  });
+
+  it('PA fully tapered at exactly £125,140', () => {
+    const result = calculateTax(makeInput({ grossSalary: 125140 }), rules);
+
+    expect(result.personalAllowance).toBe(0);
+    // Tax: 7540 + (125140-37700)*0.40 = 7540 + 34976 = 42516
+    expect(result.incomeTax).toBeCloseTo(42516, 2);
+  });
+
+  // --- NI thresholds ---
+
+  it('NI drops to 2% above UEL at £50,270', () => {
+    const at = calculateTax(makeInput({ grossSalary: 50270 }), rules);
+    const above = calculateTax(makeInput({ grossSalary: 50271 }), rules);
+
+    // At UEL: all NI at 8%
+    expect(at.nationalInsurance).toBeCloseTo(3016, 2);
+    // Just above: extra £1 at 2% not 8%
+    expect(above.nationalInsurance).toBeCloseTo(3016.02, 2);
+  });
+
+  // --- Below PA ---
+
+  it('no tax or NI below personal allowance', () => {
+    const result = calculateTax(makeInput({ grossSalary: 10000 }), rules);
+    expect(result.incomeTax).toBe(0);
+    expect(result.nationalInsurance).toBe(0);
+    expect(result.netAnnualPay).toBe(10000);
+  });
+
+  // --- Student loan plans ---
+
+  it('Plan 4 threshold is £32,745', () => {
+    const below = calculateTax(
+      makeInput({ grossSalary: 32000, undergraduatePlan: 'plan4' }),
+      rules,
+    );
+    const above = calculateTax(
+      makeInput({ grossSalary: 35000, undergraduatePlan: 'plan4' }),
+      rules,
+    );
+
+    expect(below.studentLoanRepayment).toBe(0);
+    expect(above.studentLoanRepayment).toBeCloseTo((35000 - 32745) * 0.09, 2);
+  });
+
+  it('Plan 5 threshold is £25,000', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      rules,
+    );
+    expect(result.studentLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
+  });
+
+  // --- Net pay integrity ---
+
+  it('deductions + net pay = gross income', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 75000, undergraduatePlan: 'plan2' }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
+  });
+
+  it('deductions + net pay = gross with pension and SIPP', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 80000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        sippContribution: 5000,
+      }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
+  });
+
+  // --- Complex combined scenario ---
+
+  it('complex scenario: £80k + bonus + BIK + RSUs + SS pension + SIPP + Plan 2 + postgrad', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 80000,
+        bonus: 10000,
+        taxableBenefits: 5000,
+        rsuVests: 20000,
+        rsuTaxWithheld: true,
+        rsuVestingPeriodsPerYear: 4,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        sippContribution: 5000,
+        undergraduatePlan: 'plan2',
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+
+    // Gross: 80k + 10k + 5k + 20k = 115k
+    expect(result.totalGrossIncome).toBe(115000);
+    // SS pension: 5% of 80k = 4k
+    expect(result.pensionContribution).toBe(4000);
+    // Adjusted: 115000 - 4000(SS) - 5000(SIPP) = 106000
+    expect(result.adjustedNetIncome).toBe(106000);
+    // PA: 12570 - floor((106000-100000)*0.5) = 12570-3000 = 9570
+    expect(result.personalAllowance).toBe(9570);
+    // NI-able: 80k + 10k + 20k - 4k = 106k
+    expect(result.niableIncome).toBe(106000);
+    // Student loan on NI-able: (106000-28470)*0.09 + (106000-21000)*0.06
+    expect(result.studentLoanRepayment).toBeCloseTo(
+      (106000 - 28470) * 0.09 + (106000 - 21000) * 0.06,
+      2,
+    );
+    // Deductions + net = gross
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(115000, 2);
+    // RSU withholding
+    expect(result.rsuWithholding).not.toBeNull();
+    expect(result.rsuWithholding!.totalWithheld).toBe(20000 * 0.47);
+    // Per vest
+    expect(result.rsuPerVest).not.toBeNull();
+    expect(result.rsuPerVest!.grossPerVest).toBe(5000);
+    expect(result.rsuPerVest!.netPerVest).toBe(5000 * 0.53);
+  });
+
+  // --- Pension capped at salary ---
+
+  it('caps pension contribution at gross salary', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 120,
+          salarySacrifice: true,
+        },
+      }),
+      rules,
+    );
+
+    expect(result.pensionContribution).toBe(50000);
+    expect(result.netAnnualPay).toBe(0);
+    expect(result.incomeTax).toBe(0);
+    expect(result.nationalInsurance).toBe(0);
+  });
+
+  // --- Marginal rates at key thresholds ---
+
+  it('marginal rate is 0% below PA', () => {
+    const result = calculateTax(makeInput({ grossSalary: 10000 }), rules);
+    expect(result.marginalRate).toBeCloseTo(0, 2);
+  });
+
+  it('marginal rate is 28% in basic rate band', () => {
+    const result = calculateTax(makeInput({ grossSalary: 30000 }), rules);
+    // 20% tax + 8% NI
+    expect(result.marginalRate).toBeCloseTo(0.28, 2);
+  });
+
+  it('marginal rate is 42% in higher rate band', () => {
+    const result = calculateTax(makeInput({ grossSalary: 60000 }), rules);
+    // 40% tax + 2% NI
+    expect(result.marginalRate).toBeCloseTo(0.42, 2);
+  });
+
+  it('marginal rate is 62% in PA taper zone', () => {
+    const result = calculateTax(makeInput({ grossSalary: 110000 }), rules);
+    // 40% tax + 20% taper + 2% NI
+    expect(result.marginalRate).toBeCloseTo(0.62, 2);
+  });
+
+  it('marginal rate is 47% above taper zone', () => {
+    const result = calculateTax(makeInput({ grossSalary: 150000 }), rules);
+    // 45% additional + 2% NI
+    expect(result.marginalRate).toBeCloseTo(0.47, 2);
+  });
+
+  it('marginal rate includes student loan', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan2' }),
+      rules,
+    );
+    // 20% tax + 8% NI + 9% Plan 2
+    expect(result.marginalRate).toBeCloseTo(0.37, 2);
+  });
+
+  it('marginal rate includes both undergraduate and postgraduate loan', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+    // 20% tax + 8% NI + 9% Plan 2 + 6% postgrad
+    expect(result.marginalRate).toBeCloseTo(0.43, 2);
+  });
 });
