@@ -313,7 +313,7 @@ function HomePage() {
           </div>
         </nav>
       </header>
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 print:py-0">
         <div className="grid grid-cols-1 gap-8 print:hidden lg:grid-cols-2">
           <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <CalculatorForm
