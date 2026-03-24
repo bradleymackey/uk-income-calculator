@@ -11,6 +11,7 @@ type OptionalField =
   | 'rsus'
   | 'employerPension'
   | 'sipp'
+  | 'childBenefit'
   | 'studentLoan';
 
 const FIELD_LABELS: Record<OptionalField, string> = {
@@ -19,6 +20,7 @@ const FIELD_LABELS: Record<OptionalField, string> = {
   rsus: 'RSUs',
   employerPension: 'Employer pension',
   sipp: 'SIPP',
+  childBenefit: 'Child Benefit',
   studentLoan: 'Student Loan',
 };
 
@@ -107,6 +109,7 @@ export function CalculatorForm({
         employerPensionContribution: { type: 'percentage', value: 0 },
       },
       sipp: { sippContribution: 0, sippInputType: 'gross' as const },
+      childBenefit: { numberOfChildren: 0 },
       studentLoan: {
         undergraduatePlan: 'none',
         hasPostgraduateLoan: false,
@@ -390,6 +393,41 @@ export function CalculatorForm({
           )}
         </div>
       </section>
+
+      {isVisible('childBenefit') && (
+        <section className="py-5 first:pt-0 last:pb-0">
+          <OptionalCard
+            label="Child Benefit"
+            onRemove={() => hide('childBenefit')}
+          >
+            <InputField
+              label="Number of children"
+              value={input.numberOfChildren || ''}
+              onChange={(v) =>
+                update({
+                  numberOfChildren: Math.max(0, parseInt(v) || 0),
+                })
+              }
+              step="1"
+              min={0}
+              tooltip="Number of children you receive Child Benefit for. The High Income Child Benefit Charge (HICBC) applies if your adjusted net income exceeds £60,000."
+            />
+            {input.numberOfChildren > 0 && (
+              <p className="text-xs text-gray-500">
+                {formatCurrency(
+                  taxRules.childBenefit.weeklyRateFirstChild *
+                    taxRules.childBenefit.weeksPerYear +
+                    Math.max(0, input.numberOfChildren - 1) *
+                      taxRules.childBenefit.weeklyRateAdditionalChild *
+                      taxRules.childBenefit.weeksPerYear,
+                )}
+                /year &middot; HICBC applies above{' '}
+                {formatCurrency(taxRules.childBenefit.hicbc.threshold)}
+              </p>
+            )}
+          </OptionalCard>
+        </section>
+      )}
 
       {isVisible('studentLoan') && (
         <section className="py-5 first:pt-0 last:pb-0">

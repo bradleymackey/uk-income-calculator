@@ -30,6 +30,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     employerNiPassbackPercent: 0,
     sippContribution: 0,
     sippInputType: 'gross',
+    numberOfChildren: 0,
     undergraduatePlan: 'none',
     hasPostgraduateLoan: false,
     ...overrides,
@@ -1206,5 +1207,201 @@ describe('exact threshold boundaries', () => {
   it('£2 above PA taper start reduces PA by £1', () => {
     const result = calculateTax(makeInput({ grossSalary: 100002 }), rules);
     expect(result.personalAllowance).toBe(12569);
+  });
+});
+
+// --- Child Benefit & HICBC ---
+
+describe('child benefit', () => {
+  it('returns null when no children', () => {
+    const result = calculateTax(makeInput({ grossSalary: 50000 }), rules);
+    expect(result.childBenefit).toBeNull();
+  });
+
+  it('calculates annual benefit for 1 child', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 40000, numberOfChildren: 1 }),
+      rules,
+    );
+    // £26.05 * 52 = £1,354.60
+    expect(result.childBenefit).not.toBeNull();
+    expect(result.childBenefit!.annualAmount).toBeCloseTo(1354.6, 2);
+    expect(result.childBenefit!.hicbcCharge).toBe(0);
+    expect(result.childBenefit!.netChildBenefit).toBeCloseTo(1354.6, 2);
+  });
+
+  it('calculates annual benefit for 2 children', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 40000, numberOfChildren: 2 }),
+      rules,
+    );
+    // £26.05*52 + £17.25*52 = £1,354.60 + £897.00 = £2,251.60
+    expect(result.childBenefit!.annualAmount).toBeCloseTo(2251.6, 2);
+  });
+
+  it('calculates annual benefit for 3 children', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 40000, numberOfChildren: 3 }),
+      rules,
+    );
+    // £1,354.60 + 2 * £897.00 = £3,148.60
+    expect(result.childBenefit!.annualAmount).toBeCloseTo(3148.6, 2);
+  });
+
+  it('no HICBC at exactly £60,000', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 60000, numberOfChildren: 1 }),
+      rules,
+    );
+    expect(result.childBenefit!.hicbcCharge).toBe(0);
+    expect(result.childBenefit!.netChildBenefit).toBeCloseTo(1354.6, 2);
+  });
+
+  it('partial HICBC at £70,000 (50% clawback)', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 70000, numberOfChildren: 1 }),
+      rules,
+    );
+    // (70000 - 60000) / (80000 - 60000) = 0.5 → 50% charge
+    const annual = 26.05 * 52;
+    expect(result.childBenefit!.hicbcCharge).toBeCloseTo(annual * 0.5, 2);
+    expect(result.childBenefit!.netChildBenefit).toBeCloseTo(annual * 0.5, 2);
+  });
+
+  it('full HICBC at £80,000 (100% clawback)', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 80000, numberOfChildren: 2 }),
+      rules,
+    );
+    const annual = 26.05 * 52 + 17.25 * 52;
+    expect(result.childBenefit!.hicbcCharge).toBeCloseTo(annual, 2);
+    expect(result.childBenefit!.netChildBenefit).toBeCloseTo(0, 2);
+  });
+
+  it('full HICBC above £80,000 (capped at 100%)', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 100000, numberOfChildren: 1 }),
+      rules,
+    );
+    const annual = 26.05 * 52;
+    expect(result.childBenefit!.hicbcCharge).toBeCloseTo(annual, 2);
+    expect(result.childBenefit!.netChildBenefit).toBeCloseTo(0, 2);
+  });
+
+  it('HICBC based on adjusted net income (SIPP reduces it)', () => {
+    // £70k salary, SIPP brings adjusted to £60k → no HICBC
+    const withSipp = calculateTax(
+      makeInput({
+        grossSalary: 70000,
+        numberOfChildren: 2,
+        sippContribution: 10000,
+      }),
+      rules,
+    );
+    expect(withSipp.adjustedNetIncome).toBe(60000);
+    expect(withSipp.childBenefit!.hicbcCharge).toBe(0);
+
+    // Without SIPP → 50% HICBC
+    const withoutSipp = calculateTax(
+      makeInput({ grossSalary: 70000, numberOfChildren: 2 }),
+      rules,
+    );
+    expect(withoutSipp.childBenefit!.hicbcCharge).toBeGreaterThan(0);
+  });
+
+  it('HICBC based on adjusted net income (salary sacrifice reduces it)', () => {
+    // £65k salary, 10% SS pension = £6,500 → adjusted = £58,500 → no HICBC
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 65000,
+        numberOfChildren: 1,
+        pensionContribution: {
+          type: 'percentage',
+          value: 10,
+          salarySacrifice: true,
+        },
+      }),
+      rules,
+    );
+    expect(result.adjustedNetIncome).toBe(58500);
+    expect(result.childBenefit!.hicbcCharge).toBe(0);
+  });
+
+  it('child benefit does not affect tax calculation or net pay', () => {
+    const withChildren = calculateTax(
+      makeInput({ grossSalary: 50000, numberOfChildren: 2 }),
+      rules,
+    );
+    const withoutChildren = calculateTax(
+      makeInput({ grossSalary: 50000 }),
+      rules,
+    );
+
+    expect(withChildren.incomeTax).toBe(withoutChildren.incomeTax);
+    expect(withChildren.nationalInsurance).toBe(
+      withoutChildren.nationalInsurance,
+    );
+    expect(withChildren.netAnnualPay).toBe(withoutChildren.netAnnualPay);
+    expect(withChildren.totalDeductions).toBe(withoutChildren.totalDeductions);
+  });
+
+  it('marginal rate includes HICBC in the £60k-£80k zone', () => {
+    // Without children at £70k: 40% tax + 2% NI = 42%
+    const noChildren = calculateTax(makeInput({ grossSalary: 70000 }), rules);
+    expect(noChildren.marginalRate).toBeCloseTo(0.42, 2);
+
+    // With 1 child at £70k: 42% + (1354.60 / 20000) ≈ 42% + 6.77% = 48.77%
+    const oneChild = calculateTax(
+      makeInput({ grossSalary: 70000, numberOfChildren: 1 }),
+      rules,
+    );
+    const annualBenefit1 = 26.05 * 52;
+    expect(oneChild.marginalRate).toBeCloseTo(0.42 + annualBenefit1 / 20000, 2);
+
+    // With 2 children at £70k: 42% + (2251.60 / 20000) ≈ 42% + 11.26% = 53.26%
+    const twoChildren = calculateTax(
+      makeInput({ grossSalary: 70000, numberOfChildren: 2 }),
+      rules,
+    );
+    const annualBenefit2 = 26.05 * 52 + 17.25 * 52;
+    expect(twoChildren.marginalRate).toBeCloseTo(
+      0.42 + annualBenefit2 / 20000,
+      2,
+    );
+  });
+
+  it('marginal rate excludes HICBC below £60k', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 50000, numberOfChildren: 2 }),
+      rules,
+    );
+    // Below HICBC threshold — marginal rate same as without children
+    expect(result.marginalRate).toBeCloseTo(0.28, 2);
+  });
+
+  it('marginal rate excludes HICBC above £80k', () => {
+    const withChildren = calculateTax(
+      makeInput({ grossSalary: 90000, numberOfChildren: 2 }),
+      rules,
+    );
+    const withoutChildren = calculateTax(
+      makeInput({ grossSalary: 90000 }),
+      rules,
+    );
+    // Above HICBC upper threshold — HICBC fully charged, no marginal effect
+    expect(withChildren.marginalRate).toBeCloseTo(
+      withoutChildren.marginalRate,
+      2,
+    );
+  });
+
+  it('effective rate includes HICBC', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 70000, numberOfChildren: 1 }),
+      rules,
+    );
+    const noChildren = calculateTax(makeInput({ grossSalary: 70000 }), rules);
+    // Effective rate should be higher with HICBC
+    expect(result.effectiveRate).toBeGreaterThan(noChildren.effectiveRate);
   });
 });

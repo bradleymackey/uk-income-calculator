@@ -52,8 +52,9 @@ function computeRatesAtIncome(
     rules,
   );
 
+  const hicbcCharge = r.childBenefit?.hicbcCharge ?? 0;
   const totalTaxNiSl =
-    r.incomeTax + r.nationalInsurance + r.studentLoanRepayment;
+    r.incomeTax + r.nationalInsurance + r.studentLoanRepayment + hicbcCharge;
   const effective =
     r.totalGrossIncome > 0 ? (totalTaxNiSl / r.totalGrossIncome) * 100 : 0;
 
@@ -156,6 +157,29 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
         label: `PA fully tapered — ${lastBand.name.toLowerCase()} begins`,
       },
     );
+
+    // Child Benefit HICBC thresholds
+    if (input.numberOfChildren > 0) {
+      const { threshold, upperThreshold } = taxRules.childBenefit.hicbc;
+      const cb = taxRules.childBenefit;
+      const annualBenefit =
+        cb.weeklyRateFirstChild * cb.weeksPerYear +
+        Math.max(0, input.numberOfChildren - 1) *
+          cb.weeklyRateAdditionalChild *
+          cb.weeksPerYear;
+      const hicbcMarginal =
+        (annualBenefit / (upperThreshold - threshold)) * 100;
+      boundaries.push(
+        {
+          value: threshold,
+          label: `HICBC starts — +${hicbcMarginal.toFixed(1)}% marginal rate`,
+        },
+        {
+          value: upperThreshold,
+          label: 'HICBC ends — child benefit fully clawed back',
+        },
+      );
+    }
 
     // Student loan thresholds
     if (input.undergraduatePlan !== 'none') {

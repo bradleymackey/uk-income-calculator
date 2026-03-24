@@ -420,6 +420,59 @@ export function ResultsBreakdown({
         </div>
       </section>
 
+      {/* Child Benefit */}
+      {result.childBenefit && (
+        <section>
+          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+            Child Benefit
+          </h3>
+          <div className="text-sm">
+            <Row
+              label="Annual child benefit"
+              value={formatCurrency(result.childBenefit.annualAmount)}
+              highlight="green"
+            />
+            {result.childBenefit.hicbcCharge > 0 && (
+              <Row
+                label="High Income Child Benefit Charge"
+                value={`-${formatCurrency(result.childBenefit.hicbcCharge)}`}
+                highlight="red"
+              />
+            )}
+            {result.childBenefit.hicbcCharge > 0 && (
+              <Row
+                label="Net child benefit"
+                value={formatCurrency(result.childBenefit.netChildBenefit)}
+                bold
+                highlight={
+                  result.childBenefit.netChildBenefit > 0 ? 'green' : 'red'
+                }
+              />
+            )}
+            {result.childBenefit.hicbcCharge > 0 &&
+              result.childBenefit.netChildBenefit <= 0 && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Income exceeds{' '}
+                  {formatCurrency(taxRules.childBenefit.hicbc.upperThreshold)} —
+                  benefit fully clawed back via HICBC
+                </p>
+              )}
+            {result.childBenefit.hicbcCharge > 0 &&
+              result.childBenefit.netChildBenefit > 0 && (
+                <p className="mt-1 text-xs text-amber-600">
+                  HICBC applies — 1% of benefit clawed back per{' '}
+                  {formatCurrency(
+                    (taxRules.childBenefit.hicbc.upperThreshold -
+                      taxRules.childBenefit.hicbc.threshold) /
+                      100,
+                  )}{' '}
+                  over {formatCurrency(taxRules.childBenefit.hicbc.threshold)}
+                </p>
+              )}
+          </div>
+        </section>
+      )}
+
       {/* Student Loan */}
       {result.studentLoanRepayment > 0 && (
         <section>

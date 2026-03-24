@@ -27,6 +27,16 @@ export type UndergraduatePlanId =
   | 'plan4'
   | 'plan5';
 
+export interface ChildBenefitRules {
+  weeklyRateFirstChild: number;
+  weeklyRateAdditionalChild: number;
+  weeksPerYear: number;
+  hicbc: {
+    threshold: number;
+    upperThreshold: number;
+  };
+}
+
 export interface TaxRules {
   taxYear: string;
   label: string;
@@ -45,6 +55,7 @@ export interface TaxRules {
       bands: TaxBand[];
     };
   };
+  childBenefit: ChildBenefitRules;
   studentLoans: Record<string, StudentLoanPlan>;
 }
 

@@ -37,6 +37,15 @@
       ]
     }
   },
+  "childBenefit": {
+    "weeklyRateFirstChild": 26.05,
+    "weeklyRateAdditionalChild": 17.25,
+    "weeksPerYear": 52,
+    "hicbc": {
+      "threshold": 60000,
+      "upperThreshold": 80000
+    }
+  },
   "studentLoans": {
     "plan1": { "label": "Plan 1", "threshold": 26065, "rate": 0.09 },
     "plan2": { "label": "Plan 2", "threshold": 28470, "rate": 0.09 },

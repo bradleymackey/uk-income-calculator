@@ -19,6 +19,7 @@ export interface CalculatorInput {
   employerNiPassbackPercent: number;
   sippContribution: number;
   sippInputType: 'gross' | 'net';
+  numberOfChildren: number;
   undergraduatePlan: UndergraduatePlanId;
   hasPostgraduateLoan: boolean;
 }
@@ -77,6 +78,12 @@ export interface CalculationResult {
     totalRelief: number;
     effectiveCost: number;
   };
+
+  childBenefit: {
+    annualAmount: number;
+    hicbcCharge: number;
+    netChildBenefit: number;
+  } | null;
 
   totalDeductions: number;
   netAnnualPay: number;
@@ -228,7 +235,23 @@ function totalDeductionsAtSalary(
     studentLoan += calculateStudentLoanForPlan(niable, 'postgraduate', rules);
   }
 
-  return tax + ni + studentLoan;
+  let hicbc = 0;
+  if (input.numberOfChildren > 0) {
+    const cb = rules.childBenefit;
+    const annualBenefit =
+      cb.weeklyRateFirstChild * cb.weeksPerYear +
+      Math.max(0, input.numberOfChildren - 1) *
+        cb.weeklyRateAdditionalChild *
+        cb.weeksPerYear;
+    const { threshold, upperThreshold } = cb.hicbc;
+    if (adjusted > threshold) {
+      hicbc =
+        annualBenefit *
+        Math.min(1, (adjusted - threshold) / (upperThreshold - threshold));
+    }
+  }
+
+  return tax + ni + studentLoan + hicbc;
 }
 
 function computeMarginalRate(
@@ -355,7 +378,32 @@ export function calculateTax(
     rules,
   );
 
-  // 11. RSU withholding
+  // 11. Child benefit & HICBC
+  let childBenefit: CalculationResult['childBenefit'] = null;
+  if (input.numberOfChildren > 0) {
+    const cb = rules.childBenefit;
+    const annualAmount =
+      cb.weeklyRateFirstChild * cb.weeksPerYear +
+      Math.max(0, input.numberOfChildren - 1) *
+        cb.weeklyRateAdditionalChild *
+        cb.weeksPerYear;
+    const { threshold, upperThreshold } = cb.hicbc;
+    let hicbcCharge = 0;
+    if (adjustedNetIncome > threshold) {
+      const chargePercent = Math.min(
+        1,
+        (adjustedNetIncome - threshold) / (upperThreshold - threshold),
+      );
+      hicbcCharge = annualAmount * chargePercent;
+    }
+    childBenefit = {
+      annualAmount,
+      hicbcCharge,
+      netChildBenefit: annualAmount - hicbcCharge,
+    };
+  }
+
+  // 12. RSU withholding
   const rsuWithholding =
     input.rsuTaxWithheld && rsuVests > 0
       ? {
@@ -496,6 +544,7 @@ export function calculateTax(
     postgraduateLoanRepayment,
     studentLoanRepayment,
     sippRelief,
+    childBenefit,
     totalDeductions,
     netAnnualPay,
     netMonthlyPay,

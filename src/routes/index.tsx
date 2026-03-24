@@ -26,6 +26,7 @@ interface SearchParams {
   niPassback?: number;
   sipp?: number;
   sippType?: 'gross' | 'net';
+  children?: number;
   slPlan?: string;
   slPostgrad?: boolean;
 }
@@ -62,6 +63,7 @@ function searchToInput(search: SearchParams): {
       employerNiPassbackPercent: search.niPassback ?? 0,
       sippContribution: search.sipp ?? 0,
       sippInputType: search.sippType ?? 'gross',
+      numberOfChildren: search.children ?? 0,
       undergraduatePlan: (search.slPlan as UndergraduatePlanId) ?? 'none',
       hasPostgraduateLoan: search.slPostgrad ?? false,
     },
@@ -98,6 +100,7 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
     params.niPassback = input.employerNiPassbackPercent;
   if (input.sippContribution) params.sipp = input.sippContribution;
   if (input.sippInputType !== 'gross') params.sippType = input.sippInputType;
+  if (input.numberOfChildren) params.children = input.numberOfChildren;
   if (input.undergraduatePlan !== 'none')
     params.slPlan = input.undergraduatePlan;
   if (input.hasPostgraduateLoan) params.slPostgrad = true;
@@ -134,6 +137,7 @@ export const Route = createFileRoute('/')({
       niPassback: search.niPassback ? Number(search.niPassback) : undefined,
       sipp: search.sipp ? Number(search.sipp) : undefined,
       sippType: search.sippType as 'gross' | 'net' | undefined,
+      children: search.children ? Number(search.children) : undefined,
       slPlan: search.slPlan as string | undefined,
       slPostgrad:
         search.slPostgrad === true || search.slPostgrad === 'true' || undefined,
