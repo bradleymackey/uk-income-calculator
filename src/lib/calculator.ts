@@ -316,12 +316,22 @@ function computeMarginalRate(
   rules: TaxRules,
 ): number {
   if (currentSalary <= 0) return 0;
-  // Use a £100 step to reliably capture the PA taper effect.
-  // The taper removes £1 of PA per £2 of adjusted income, but with
-  // salary sacrifice, each £1 of salary produces less than £1 of
-  // adjusted income (e.g. 95p with 5% SS). A small step may not
-  // trigger Math.floor to change, hiding the taper entirely.
-  const step = 100;
+  // Use £1 step for an accurate "next £1" marginal rate.
+  // In the PA taper zone (£100k–£125,140), use a £2 step because the
+  // taper removes £1 of PA per £2 of income and Math.floor means a
+  // £1 step can miss the taper on odd-pound boundaries.
+  const adjusted =
+    currentSalary +
+    input.bonus +
+    input.taxableBenefits +
+    input.rsuVests +
+    input.selfEmploymentIncome;
+  const inTaperZone =
+    adjusted > rules.personalAllowance.taperThreshold &&
+    adjusted <
+      rules.personalAllowance.taperThreshold +
+        rules.personalAllowance.amount / rules.personalAllowance.taperRate;
+  const step = inTaperZone ? 2 : 1;
   const atCurrent = totalDeductionsAtSalary(currentSalary, input, rules);
   const atNext = totalDeductionsAtSalary(currentSalary + step, input, rules);
   return (atNext - atCurrent) / step;
