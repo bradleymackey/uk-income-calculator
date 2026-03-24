@@ -252,16 +252,16 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+      <header className="mx-auto w-full max-w-5xl px-4 pt-6">
+        <nav className="flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-700">
+          <span className="text-lg font-bold tracking-tight">
             UK Income Tax Calculator
-          </h1>
-          <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+          </span>
+          <div className="flex items-center gap-3 text-sm">
             <select
               value={taxYear}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm font-medium text-neutral-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+              className="rounded-md border border-neutral-200 bg-transparent px-2 py-1 text-sm font-medium transition-colors hover:text-yellow-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-700"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -271,8 +271,9 @@ function HomePage() {
             </select>
             <TaxYearBadge taxYear={taxYear} />
           </div>
-        </header>
-
+        </nav>
+      </header>
+      <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <CalculatorForm
