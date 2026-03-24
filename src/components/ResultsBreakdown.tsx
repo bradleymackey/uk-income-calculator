@@ -1,9 +1,10 @@
-import type { CalculationResult } from '~/lib/calculator';
+import type { CalculationResult, CalculatorInput } from '~/lib/calculator';
 import type { TaxRules } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { TaxRateChart } from './TaxRateChart';
 
 interface ResultsBreakdownProps {
+  input: CalculatorInput;
   result: CalculationResult;
   taxRules: TaxRules;
 }
@@ -73,7 +74,11 @@ function BandTable({
   );
 }
 
-export function ResultsBreakdown({ result, taxRules }: ResultsBreakdownProps) {
+export function ResultsBreakdown({
+  input,
+  result,
+  taxRules,
+}: ResultsBreakdownProps) {
   return (
     <div className="space-y-5">
       {/* Summary card */}
@@ -140,12 +145,7 @@ export function ResultsBreakdown({ result, taxRules }: ResultsBreakdownProps) {
               </p>
             )}
         </div>
-        <TaxRateChart
-          adjustedNetIncome={result.adjustedNetIncome}
-          marginalRate={result.marginalRate}
-          effectiveRate={result.effectiveRate}
-          taxRules={taxRules}
-        />
+        <TaxRateChart input={input} result={result} taxRules={taxRules} />
         {result.rsuVests > 0 && (
           <>
             <div className="my-2 border-t border-blue-200" />
