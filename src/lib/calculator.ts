@@ -188,11 +188,14 @@ function totalDeductionsAtSalary(
   input: CalculatorInput,
   rules: TaxRules,
 ): number {
-  const pension =
+  const pensionRaw =
     input.pensionContribution.type === 'percentage'
       ? (salary * input.pensionContribution.value) / 100
       : input.pensionContribution.value;
-  const ssDeduction = input.pensionContribution.salarySacrifice ? pension : 0;
+  const pension = Math.min(pensionRaw, salary);
+  const ssDeduction = input.pensionContribution.salarySacrifice
+    ? Math.min(pension, salary)
+    : 0;
   const sipp =
     input.sippInputType === 'net'
       ? input.sippContribution / 0.8
@@ -252,10 +255,12 @@ export function calculateTax(
   const { grossSalary, bonus, taxableBenefits, rsuVests } = input;
 
   // 1. Resolve pension contributions to £ amounts
-  const pensionContribution =
+  // Cap at gross salary — you can't contribute more than you earn
+  const pensionContributionRaw =
     input.pensionContribution.type === 'percentage'
       ? (grossSalary * input.pensionContribution.value) / 100
       : input.pensionContribution.value;
+  const pensionContribution = Math.min(pensionContributionRaw, grossSalary);
 
   const employerPensionContribution =
     input.employerPensionContribution.type === 'percentage'
@@ -292,8 +297,9 @@ export function calculateTax(
 
   // 3. NI-able income: salary + bonus + RSUs - salary sacrifice pension
   // BIK is NOT subject to employee NI
+  // Cap salary sacrifice at gross salary — you can't sacrifice more than you earn
   const salarySacrificeDeduction = input.pensionContribution.salarySacrifice
-    ? pensionContribution
+    ? Math.min(pensionContribution, grossSalary)
     : 0;
   const niableIncome =
     grossSalary + bonus + rsuVests - salarySacrificeDeduction;
