@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -34,8 +34,6 @@ function computeRatesAtIncome(
   baseInput: CalculatorInput,
   rules: TaxRules,
 ): DataPoint {
-  // Treat targetGross as the entire salary, zero out other income.
-  // Keeps the user's pension %, salary sacrifice, student loan, etc.
   const r = calculateTax(
     {
       ...baseInput,
@@ -48,10 +46,10 @@ function computeRatesAtIncome(
     rules,
   );
 
-  const totalTaxAndNi =
+  const totalTaxNiSl =
     r.incomeTax + r.nationalInsurance + r.studentLoanRepayment;
   const effective =
-    r.totalGrossIncome > 0 ? (totalTaxAndNi / r.totalGrossIncome) * 100 : 0;
+    r.totalGrossIncome > 0 ? (totalTaxNiSl / r.totalGrossIncome) * 100 : 0;
 
   return {
     income: targetGross,
@@ -66,6 +64,9 @@ function formatIncome(value: number): string {
 }
 
 export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const totalGross = result.totalGrossIncome;
 
   const data = useMemo(() => {
@@ -73,7 +74,6 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     if (maxIncome <= 0) return [];
 
     const points: DataPoint[] = [];
-    // Key thresholds for inflection points
     const thresholds = [
       0, 5000, 10000, 12570, 15000, 20000, 25000, 30000, 37700, 40000, 45000,
       50000, 50270, 55000, 60000, 70000, 80000, 90000, 99999, 100000, 105000,
@@ -87,7 +87,6 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       }
     }
 
-    // Ensure the max point is included
     const roundedMax = Math.round(maxIncome);
     if (!thresholds.includes(roundedMax)) {
       points.push(computeRatesAtIncome(roundedMax, input, taxRules));
@@ -97,92 +96,106 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     return points;
   }, [totalGross, input, taxRules]);
 
-  if (totalGross <= 0) return null;
+  if (!mounted || totalGross <= 0 || data.length === 0) return null;
 
-  const userMarginal = result.marginalRate * 100;
-  const totalTaxAndNi =
+  const totalTaxNiSl =
     result.incomeTax + result.nationalInsurance + result.studentLoanRepayment;
-  const userEffective = totalGross > 0 ? (totalTaxAndNi / totalGross) * 100 : 0;
+  const userEffective = totalGross > 0 ? (totalTaxNiSl / totalGross) * 100 : 0;
+  const userMarginal = result.marginalRate * 100;
+
+  const yMax = Math.max(
+    10,
+    Math.ceil(
+      Math.max(
+        ...data.map((d) => d.marginal),
+        ...data.map((d) => d.effective),
+        userMarginal,
+        userEffective,
+      ) / 10,
+    ) * 10,
+  );
 
   return (
     <div className="mt-3">
       <p className="mb-2 text-xs font-medium text-gray-500">
         Tax rate by income
       </p>
-      <ResponsiveContainer width="100%" height={180}>
-        <LineChart
-          data={data}
-          margin={{ top: 5, right: 5, bottom: 5, left: 0 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="income"
-            tickFormatter={formatIncome}
-            tick={{ fontSize: 10, fill: '#6b7280' }}
-            stroke="#d1d5db"
-          />
-          <YAxis
-            tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 10, fill: '#6b7280' }}
-            stroke="#d1d5db"
-            domain={[
-              0,
-              (dataMax: number) =>
-                Math.min(70, Math.ceil(dataMax / 10) * 10 + 10),
-            ]}
-          />
-          <Tooltip
-            formatter={(value, name) => [
-              `${Number(value).toFixed(1)}%`,
-              name === 'marginal' ? 'Marginal rate' : 'Effective rate',
-            ]}
-            labelFormatter={(label) => formatIncome(label as number)}
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 6,
-              border: '1px solid #e5e7eb',
-            }}
-          />
-          <Line
-            type="stepAfter"
-            dataKey="marginal"
-            stroke="#ef4444"
-            strokeWidth={2}
-            dot={false}
-            name="marginal"
-          />
-          <Line
-            type="monotone"
-            dataKey="effective"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            dot={false}
-            name="effective"
-          />
-          <ReferenceLine
-            x={Math.round(totalGross)}
-            stroke="#6b7280"
-            strokeDasharray="4 4"
-            strokeWidth={1}
-          />
-          <ReferenceDot
-            x={Math.round(totalGross)}
-            y={userMarginal}
-            r={4}
-            fill="#ef4444"
-            stroke="#fff"
-            strokeWidth={2}
-          />
-          <ReferenceDot
-            x={Math.round(totalGross)}
-            y={userEffective}
-            r={4}
-            fill="#3b82f6"
-            stroke="#fff"
-            strokeWidth={2}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <div style={{ width: '100%', height: 180 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            margin={{ top: 5, right: 5, bottom: 5, left: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="income"
+              type="number"
+              tickFormatter={formatIncome}
+              tick={{ fontSize: 10, fill: '#6b7280' }}
+              stroke="#d1d5db"
+              domain={[0, Math.round(totalGross)]}
+            />
+            <YAxis
+              tickFormatter={(v) => `${v}%`}
+              tick={{ fontSize: 10, fill: '#6b7280' }}
+              stroke="#d1d5db"
+              domain={[0, yMax]}
+            />
+            <Tooltip
+              formatter={(value, name) => [
+                `${Number(value).toFixed(1)}%`,
+                name === 'marginal' ? 'Marginal rate' : 'Effective rate',
+              ]}
+              labelFormatter={(label) => formatIncome(label as number)}
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 6,
+                border: '1px solid #e5e7eb',
+              }}
+            />
+            <Line
+              type="stepAfter"
+              dataKey="marginal"
+              stroke="#ef4444"
+              strokeWidth={2}
+              dot={false}
+              name="marginal"
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="effective"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              dot={false}
+              name="effective"
+              isAnimationActive={false}
+            />
+            <ReferenceLine
+              x={Math.round(totalGross)}
+              stroke="#6b7280"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+            />
+            <ReferenceDot
+              x={Math.round(totalGross)}
+              y={userMarginal}
+              r={4}
+              fill="#ef4444"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+            <ReferenceDot
+              x={Math.round(totalGross)}
+              y={userEffective}
+              r={4}
+              fill="#3b82f6"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
       <div className="mt-1 flex justify-center gap-4 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-3 rounded-sm bg-red-500" />
