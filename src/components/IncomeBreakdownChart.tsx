@@ -206,7 +206,7 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
       <p className="mb-1 text-xs font-medium text-gray-500">
         Where your income goes
       </p>
-      <div style={{ width: '100%', height: 240 }}>
+      <div style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -215,8 +215,8 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={50}
-              outerRadius={80}
+              innerRadius={65}
+              outerRadius={105}
               shape={(props: PieSectorShapeProps) => (
                 <SectorShape
                   {...props}
