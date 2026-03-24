@@ -308,6 +308,10 @@ function HomePage() {
           </div>
         </div>
       </div>
+      <footer className="mx-auto max-w-5xl px-4 pb-6 pt-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+        All calculations are performed locally in your browser. Nothing is
+        stored or sent anywhere unless you share your URL.
+      </footer>
     </div>
   );
 }
