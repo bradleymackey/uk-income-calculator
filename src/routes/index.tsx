@@ -27,6 +27,7 @@ interface SearchParams {
   empPensionPct?: number;
   empPensionFixed?: number;
   niPassback?: number;
+  otherSS?: number;
   sipp?: number;
   sippType?: 'gross' | 'net';
   children?: number;
@@ -67,6 +68,7 @@ function searchToInput(search: SearchParams): {
           : (search.empPensionPct ?? 0),
       },
       employerNiPassbackPercent: search.niPassback ?? 0,
+      otherSalarySacrifice: search.otherSS ?? 0,
       sippContribution: search.sipp ?? 0,
       sippInputType: search.sippType ?? 'gross',
       numberOfChildren: search.children ?? 0,
@@ -107,6 +109,7 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
   }
   if (input.employerNiPassbackPercent)
     params.niPassback = input.employerNiPassbackPercent;
+  if (input.otherSalarySacrifice) params.otherSS = input.otherSalarySacrifice;
   if (input.sippContribution) params.sipp = input.sippContribution;
   if (input.sippInputType !== 'gross') params.sippType = input.sippInputType;
   if (input.numberOfChildren) params.children = input.numberOfChildren;
@@ -147,6 +150,7 @@ export const Route = createFileRoute('/')({
         ? Number(search.empPensionFixed)
         : undefined,
       niPassback: search.niPassback ? Number(search.niPassback) : undefined,
+      otherSS: search.otherSS ? Number(search.otherSS) : undefined,
       sipp: search.sipp ? Number(search.sipp) : undefined,
       sippType: search.sippType as 'gross' | 'net' | undefined,
       children: search.children ? Number(search.children) : undefined,

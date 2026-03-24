@@ -26,6 +26,7 @@ export interface CalculatorInput {
     value: number;
   };
   employerNiPassbackPercent: number;
+  otherSalarySacrifice: number;
   sippContribution: number;
   sippInputType: 'gross' | 'net';
   numberOfChildren: number;
@@ -219,9 +220,11 @@ function totalDeductionsAtSalary(
       ? (salary * input.pensionContribution.value) / 100
       : input.pensionContribution.value;
   const pension = Math.min(pensionRaw, salary);
-  const ssDeduction = input.pensionContribution.salarySacrifice
+  const pensionSS = input.pensionContribution.salarySacrifice
     ? Math.min(pension, salary)
     : 0;
+  const otherSS = Math.min(input.otherSalarySacrifice, salary - pensionSS);
+  const ssDeduction = pensionSS + otherSS;
   const sipp =
     input.sippInputType === 'net'
       ? input.sippContribution / 0.8
@@ -316,18 +319,31 @@ export function calculateTax(
 
   // Calculate employer NI saving from salary sacrifice
   const employerNi = rules.nationalInsurance.employerClass1;
+  // Employer NI saving from all salary sacrifice (pension + other)
   let employerNiSaving = 0;
-  if (input.pensionContribution.salarySacrifice && pensionContribution > 0) {
-    // Employer NI on original salary vs reduced salary
-    const originalNiable = Math.max(
-      0,
-      grossSalary - employerNi.secondaryThreshold,
-    );
-    const reducedNiable = Math.max(
-      0,
-      grossSalary - pensionContribution - employerNi.secondaryThreshold,
-    );
-    employerNiSaving = (originalNiable - reducedNiable) * employerNi.rate;
+  {
+    const totalSS =
+      (input.pensionContribution.salarySacrifice
+        ? Math.min(pensionContribution, grossSalary)
+        : 0) +
+      Math.min(
+        input.otherSalarySacrifice,
+        grossSalary -
+          (input.pensionContribution.salarySacrifice
+            ? Math.min(pensionContribution, grossSalary)
+            : 0),
+      );
+    if (totalSS > 0) {
+      const originalNiable = Math.max(
+        0,
+        grossSalary - employerNi.secondaryThreshold,
+      );
+      const reducedNiable = Math.max(
+        0,
+        grossSalary - totalSS - employerNi.secondaryThreshold,
+      );
+      employerNiSaving = (originalNiable - reducedNiable) * employerNi.rate;
+    }
   }
   const employerNiPassback =
     employerNiSaving * (input.employerNiPassbackPercent / 100);
@@ -342,12 +358,17 @@ export function calculateTax(
   // 2. Total gross income
   const totalGrossIncome = grossSalary + bonus + taxableBenefits + rsuVests;
 
-  // 3. NI-able income: salary + bonus + RSUs - salary sacrifice pension
+  // 3. NI-able income: salary + bonus + RSUs - salary sacrifice
   // BIK is NOT subject to employee NI
   // Cap salary sacrifice at gross salary — you can't sacrifice more than you earn
-  const salarySacrificeDeduction = input.pensionContribution.salarySacrifice
+  const pensionSacrifice = input.pensionContribution.salarySacrifice
     ? Math.min(pensionContribution, grossSalary)
     : 0;
+  const otherSacrifice = Math.min(
+    input.otherSalarySacrifice,
+    grossSalary - pensionSacrifice,
+  );
+  const salarySacrificeDeduction = pensionSacrifice + otherSacrifice;
   const niableIncome =
     grossSalary + bonus + rsuVests - salarySacrificeDeduction;
 
@@ -459,6 +480,7 @@ export function calculateTax(
     nationalInsurance +
     studentLoanRepayment +
     pensionContribution +
+    otherSacrifice +
     sippContribution;
 
   const netAnnualPay = totalGrossIncome - totalDeductions;

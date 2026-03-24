@@ -15,6 +15,7 @@ type OptionalField =
   | 'bonus'
   | 'benefits'
   | 'rsus'
+  | 'salarySacrifice'
   | 'pension'
   | 'employerPension'
   | 'sipp'
@@ -26,6 +27,7 @@ const FIELD_LABELS: Record<OptionalField, string> = {
   bonus: 'Bonus',
   benefits: 'Benefits (BIK)',
   rsus: 'RSUs',
+  salarySacrifice: 'Salary Sacrifice',
   pension: 'Pension',
   employerPension: 'Employer pension',
   sipp: 'SIPP',
@@ -38,6 +40,7 @@ const CHILD_FIELDS: Partial<Record<OptionalField, OptionalField>> = {
   bonus: 'income',
   benefits: 'income',
   rsus: 'income',
+  salarySacrifice: 'income',
   employerPension: 'pension',
   sipp: 'pension',
 };
@@ -121,6 +124,7 @@ export function CalculatorForm({
     if (input.bonus) initial.add('bonus');
     if (input.taxableBenefits) initial.add('benefits');
     if (input.rsuVests) initial.add('rsus');
+    if (input.otherSalarySacrifice) initial.add('salarySacrifice');
     if (
       input.pensionContribution.value ||
       input.pensionContribution.salarySacrifice ||
@@ -161,10 +165,12 @@ export function CalculatorForm({
         rsuVests: 0,
         rsuTaxWithheld: false,
         rsuVestingPeriodsPerYear: 4,
+        otherSalarySacrifice: 0,
       },
       bonus: { bonus: 0 },
       benefits: { taxableBenefits: 0 },
       rsus: { rsuVests: 0, rsuTaxWithheld: false, rsuVestingPeriodsPerYear: 4 },
+      salarySacrifice: { otherSalarySacrifice: 0 },
       pension: {
         pensionContribution: {
           type: 'percentage',
@@ -377,6 +383,22 @@ export function CalculatorForm({
                     </label>
                   </>
                 )}
+              </OptionalCard>
+            )}
+            {isVisible('salarySacrifice') && (
+              <OptionalCard
+                label="Salary Sacrifice"
+                onRemove={() => hide('salarySacrifice')}
+              >
+                <InputField
+                  label="Annual salary sacrifice amount"
+                  value={input.otherSalarySacrifice || ''}
+                  onChange={(v) =>
+                    update({ otherSalarySacrifice: parseFloat(v) || 0 })
+                  }
+                  prefix="£"
+                  tooltip="General salary sacrifice deductions such as cycle-to-work, technology schemes, or childcare vouchers. Reduces your salary before tax and NI are calculated."
+                />
               </OptionalCard>
             )}
           </OptionalCard>

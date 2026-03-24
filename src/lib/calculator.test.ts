@@ -31,6 +31,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
       value: 0,
     },
     employerNiPassbackPercent: 0,
+    otherSalarySacrifice: 0,
     sippContribution: 0,
     sippInputType: 'gross',
     numberOfChildren: 0,
@@ -1818,5 +1819,106 @@ describe('NI category', () => {
     // Employer NI saving still exists even though employee pays no NI
     expect(result.employerNiSaving).toBeGreaterThan(0);
     expect(result.employerNiPassback).toBeGreaterThan(0);
+  });
+});
+
+// --- Other salary sacrifice ---
+
+describe('other salary sacrifice', () => {
+  it('reduces taxable and NI-able income', () => {
+    const withSS = calculateTax(
+      makeInput({ grossSalary: 50000, otherSalarySacrifice: 5000 }),
+      rules,
+    );
+    const withoutSS = calculateTax(makeInput({ grossSalary: 50000 }), rules);
+
+    expect(withSS.adjustedNetIncome).toBe(45000);
+    expect(withSS.niableIncome).toBe(45000);
+    expect(withSS.incomeTax).toBeLessThan(withoutSS.incomeTax);
+    expect(withSS.nationalInsurance).toBeLessThan(withoutSS.nationalInsurance);
+  });
+
+  it('reduces student loan repayment', () => {
+    const withSS = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        otherSalarySacrifice: 5000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const withoutSS = calculateTax(
+      makeInput({ grossSalary: 40000, undergraduatePlan: 'plan2' }),
+      rules,
+    );
+
+    expect(withSS.studentLoanRepayment).toBeLessThan(
+      withoutSS.studentLoanRepayment,
+    );
+  });
+
+  it('stacks with pension salary sacrifice', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        otherSalarySacrifice: 3000,
+      }),
+      rules,
+    );
+
+    // Pension SS = 2500, other SS = 3000, total = 5500
+    expect(result.niableIncome).toBe(44500);
+    expect(result.adjustedNetIncome).toBe(44500);
+  });
+
+  it('capped at remaining salary after pension sacrifice', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 10000,
+        pensionContribution: {
+          type: 'fixed',
+          value: 8000,
+          salarySacrifice: true,
+        },
+        otherSalarySacrifice: 5000,
+      }),
+      rules,
+    );
+
+    // Pension SS = 8000, only 2000 left for other SS
+    expect(result.niableIncome).toBe(0);
+  });
+
+  it('deductions + net = gross', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 60000, otherSalarySacrifice: 5000 }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
+  });
+
+  it('contributes to employer NI saving', () => {
+    const withSS = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        otherSalarySacrifice: 5000,
+        employerNiPassbackPercent: 100,
+      }),
+      rules,
+    );
+    const withoutSS = calculateTax(
+      makeInput({ grossSalary: 50000, employerNiPassbackPercent: 100 }),
+      rules,
+    );
+
+    expect(withSS.employerNiSaving).toBeGreaterThan(withoutSS.employerNiSaving);
   });
 });
