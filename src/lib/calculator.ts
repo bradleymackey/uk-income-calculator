@@ -327,7 +327,7 @@ function computeMarginalRate(
     input.rsuVests +
     input.selfEmploymentIncome;
   const inTaperZone =
-    adjusted > rules.personalAllowance.taperThreshold &&
+    adjusted >= rules.personalAllowance.taperThreshold &&
     adjusted <
       rules.personalAllowance.taperThreshold +
         rules.personalAllowance.amount / rules.personalAllowance.taperRate;
