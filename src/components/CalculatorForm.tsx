@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import type { CalculatorInput } from '~/lib/calculator';
+import type {
+  CalculatorInput,
+  SalaryPeriod,
+  FixedPeriod,
+} from '~/lib/calculator';
 import type { TaxRules, Country, NiCategory } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
@@ -166,6 +170,8 @@ export function CalculatorForm({
         rsuTaxWithheld: false,
         rsuVestingPeriodsPerYear: 4,
         otherSalarySacrifice: 0,
+        salaryPeriod: 'annual' as const,
+        daysPerWeek: 5,
       },
       bonus: { bonus: 0 },
       benefits: { taxableBenefits: 0 },
@@ -177,6 +183,7 @@ export function CalculatorForm({
           value: 0,
           salarySacrifice: false,
         },
+        pensionFixedPeriod: 'annual' as const,
         employerPensionContribution: { type: 'percentage', value: 0 },
         employerNiPassbackPercent: 0,
         sippContribution: 0,
@@ -306,13 +313,73 @@ export function CalculatorForm({
       {isVisible('income') && (
         <section className="py-5 first:pt-0 last:pb-0">
           <OptionalCard label="Income" onRemove={() => hide('income')}>
-            <InputField
-              label="Annual gross salary"
-              value={input.grossSalary || ''}
-              onChange={(v) => update({ grossSalary: parseFloat(v) || 0 })}
-              prefix="£"
-              tooltip="Your total annual salary before any deductions, as stated in your employment contract."
-            />
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <InputField
+                  label={
+                    input.salaryPeriod === 'daily'
+                      ? 'Daily rate'
+                      : input.salaryPeriod === 'monthly'
+                        ? 'Monthly gross salary'
+                        : 'Annual gross salary'
+                  }
+                  value={
+                    input.grossSalary
+                      ? input.salaryPeriod === 'monthly'
+                        ? +(input.grossSalary / 12).toFixed(2)
+                        : input.salaryPeriod === 'daily'
+                          ? +(
+                              input.grossSalary /
+                              (input.daysPerWeek * 52)
+                            ).toFixed(2)
+                          : input.grossSalary
+                      : ''
+                  }
+                  onChange={(v) => {
+                    const val = parseFloat(v) || 0;
+                    const annual =
+                      input.salaryPeriod === 'monthly'
+                        ? val * 12
+                        : input.salaryPeriod === 'daily'
+                          ? val * input.daysPerWeek * 52
+                          : val;
+                    update({ grossSalary: annual });
+                  }}
+                  prefix="£"
+                  tooltip="Your total salary before any deductions."
+                />
+              </div>
+              <select
+                value={input.salaryPeriod}
+                onChange={(e) =>
+                  update({ salaryPeriod: e.target.value as SalaryPeriod })
+                }
+                className="mb-[1px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+              >
+                <option value="annual">Year</option>
+                <option value="monthly">Month</option>
+                <option value="daily">Day</option>
+              </select>
+            </div>
+            {input.salaryPeriod === 'daily' && (
+              <InputField
+                label="Days per week"
+                value={input.daysPerWeek || ''}
+                onChange={(v) => {
+                  const days = Math.min(7, Math.max(1, parseInt(v) || 5));
+                  // Recalculate annual salary with new days
+                  const dailyRate =
+                    input.grossSalary / (input.daysPerWeek * 52);
+                  update({
+                    daysPerWeek: days,
+                    grossSalary: dailyRate * days * 52,
+                  });
+                }}
+                step="1"
+                min={1}
+                tooltip="Number of days you work per week, used to calculate annual salary from daily rate."
+              />
+            )}
             {isVisible('bonus') && (
               <OptionalCard label="Bonus" onRemove={() => hide('bonus')}>
                 <InputField
@@ -440,11 +507,29 @@ export function CalculatorForm({
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <InputField
-                    label="Workplace pension contribution"
-                    value={input.pensionContribution.value || ''}
-                    onChange={(v) =>
-                      updatePension({ value: parseFloat(v) || 0 })
+                    label={
+                      input.pensionContribution.type === 'fixed' &&
+                      input.pensionFixedPeriod === 'monthly'
+                        ? 'Monthly pension contribution'
+                        : 'Workplace pension contribution'
                     }
+                    value={
+                      input.pensionContribution.type === 'fixed' &&
+                      input.pensionFixedPeriod === 'monthly'
+                        ? input.pensionContribution.value
+                          ? +(input.pensionContribution.value / 12).toFixed(2)
+                          : ''
+                        : input.pensionContribution.value || ''
+                    }
+                    onChange={(v) => {
+                      const val = parseFloat(v) || 0;
+                      const annual =
+                        input.pensionContribution.type === 'fixed' &&
+                        input.pensionFixedPeriod === 'monthly'
+                          ? val * 12
+                          : val;
+                      updatePension({ value: annual });
+                    }}
                     prefix={
                       input.pensionContribution.type === 'fixed'
                         ? '£'
@@ -470,6 +555,20 @@ export function CalculatorForm({
                   <option value="percentage">%</option>
                   <option value="fixed">£</option>
                 </select>
+                {input.pensionContribution.type === 'fixed' && (
+                  <select
+                    value={input.pensionFixedPeriod}
+                    onChange={(e) =>
+                      update({
+                        pensionFixedPeriod: e.target.value as FixedPeriod,
+                      })
+                    }
+                    className="mb-[1px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+                  >
+                    <option value="annual">Year</option>
+                    <option value="monthly">Month</option>
+                  </select>
+                )}
               </div>
               <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                 <input

@@ -6,11 +6,16 @@ import type {
 } from './tax-rules';
 import { getIncomeTaxBands } from './tax-rules';
 
+export type SalaryPeriod = 'annual' | 'monthly' | 'daily';
+export type FixedPeriod = 'annual' | 'monthly';
+
 export interface CalculatorInput {
   country: Country;
   niCategory: NiCategory;
   isBlind: boolean;
   grossSalary: number;
+  salaryPeriod: SalaryPeriod;
+  daysPerWeek: number;
   bonus: number;
   taxableBenefits: number;
   rsuVests: number;
@@ -21,6 +26,7 @@ export interface CalculatorInput {
     value: number;
     salarySacrifice: boolean;
   };
+  pensionFixedPeriod: FixedPeriod;
   employerPensionContribution: {
     type: 'percentage' | 'fixed';
     value: number;

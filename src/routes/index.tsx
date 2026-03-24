@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import { CalculatorForm } from '~/components/CalculatorForm';
 import { ResultsBreakdown } from '~/components/ResultsBreakdown';
-import { calculateTax, type CalculatorInput } from '~/lib/calculator';
+import {
+  calculateTax,
+  type CalculatorInput,
+  type SalaryPeriod,
+  type FixedPeriod,
+} from '~/lib/calculator';
 import {
   getTaxRules,
   getAvailableTaxYears,
@@ -16,6 +21,8 @@ interface SearchParams {
   niCat?: NiCategory;
   blind?: boolean;
   salary?: number;
+  salaryPer?: string;
+  daysPerWeek?: number;
   bonus?: number;
   bik?: number;
   rsu?: number;
@@ -26,6 +33,7 @@ interface SearchParams {
   pensionSS?: boolean;
   empPensionPct?: number;
   empPensionFixed?: number;
+  pensionFixedPer?: string;
   niPassback?: number;
   otherSS?: number;
   selfEmp?: number;
@@ -50,6 +58,8 @@ function searchToInput(search: SearchParams): {
       niCategory: search.niCat ?? 'A',
       isBlind: search.blind ?? false,
       grossSalary: search.salary ?? 0,
+      salaryPeriod: (search.salaryPer as SalaryPeriod) ?? 'annual',
+      daysPerWeek: search.daysPerWeek ?? 5,
       bonus: search.bonus ?? 0,
       taxableBenefits: search.bik ?? 0,
       rsuVests: search.rsu ?? 0,
@@ -68,6 +78,7 @@ function searchToInput(search: SearchParams): {
           ? (search.empPensionFixed ?? 0)
           : (search.empPensionPct ?? 0),
       },
+      pensionFixedPeriod: (search.pensionFixedPer as FixedPeriod) ?? 'annual',
       employerNiPassbackPercent: search.niPassback ?? 0,
       otherSalarySacrifice: search.otherSS ?? 0,
       selfEmploymentIncome: search.selfEmp ?? 0,
@@ -90,6 +101,8 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
   if (input.niCategory !== 'A') params.niCat = input.niCategory;
   if (input.isBlind) params.blind = true;
   if (input.grossSalary) params.salary = input.grossSalary;
+  if (input.salaryPeriod !== 'annual') params.salaryPer = input.salaryPeriod;
+  if (input.daysPerWeek !== 5) params.daysPerWeek = input.daysPerWeek;
   if (input.bonus) params.bonus = input.bonus;
   if (input.taxableBenefits) params.bik = input.taxableBenefits;
   if (input.rsuVests) params.rsu = input.rsuVests;
@@ -104,6 +117,8 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
     }
   }
   if (input.pensionContribution.salarySacrifice) params.pensionSS = true;
+  if (input.pensionFixedPeriod !== 'annual')
+    params.pensionFixedPer = input.pensionFixedPeriod;
   if (input.employerPensionContribution.value) {
     if (input.employerPensionContribution.type === 'fixed') {
       params.empPensionFixed = input.employerPensionContribution.value;
@@ -134,6 +149,8 @@ export const Route = createFileRoute('/')({
       niCat: search.niCat as NiCategory | undefined,
       blind: search.blind === true || search.blind === 'true' || undefined,
       salary: search.salary ? Number(search.salary) : undefined,
+      salaryPer: search.salaryPer as string | undefined,
+      daysPerWeek: search.daysPerWeek ? Number(search.daysPerWeek) : undefined,
       bonus: search.bonus ? Number(search.bonus) : undefined,
       bik: search.bik ? Number(search.bik) : undefined,
       rsu: search.rsu ? Number(search.rsu) : undefined,
@@ -154,6 +171,7 @@ export const Route = createFileRoute('/')({
       empPensionFixed: search.empPensionFixed
         ? Number(search.empPensionFixed)
         : undefined,
+      pensionFixedPer: search.pensionFixedPer as string | undefined,
       niPassback: search.niPassback ? Number(search.niPassback) : undefined,
       otherSS: search.otherSS ? Number(search.otherSS) : undefined,
       selfEmp: search.selfEmp ? Number(search.selfEmp) : undefined,

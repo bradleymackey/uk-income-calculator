@@ -16,6 +16,8 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     niCategory: 'A',
     isBlind: false,
     grossSalary: 0,
+    salaryPeriod: 'annual',
+    daysPerWeek: 5,
     bonus: 0,
     taxableBenefits: 0,
     rsuVests: 0,
@@ -26,6 +28,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
       value: 0,
       salarySacrifice: false,
     },
+    pensionFixedPeriod: 'annual',
     employerPensionContribution: {
       type: 'percentage',
       value: 0,
