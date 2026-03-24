@@ -841,3 +841,370 @@ describe('2026/27 tax year', () => {
     expect(r.postgraduateLoanRepayment).toBeCloseTo((30000 - 21000) * 0.06, 2);
   });
 });
+
+// --- Effective rate ---
+
+describe('effective rate', () => {
+  it('is 0% below personal allowance', () => {
+    const result = calculateTax(makeInput({ grossSalary: 10000 }), rules);
+    expect(result.effectiveRate).toBe(0);
+  });
+
+  it('is correct for basic rate taxpayer at £30,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 30000 }), rules);
+    // Tax: (30000 - 12570) * 0.20 = 3486
+    // NI:  (30000 - 12570) * 0.08 = 1394.40
+    // Total deductions: 4880.40
+    // Effective: 4880.40 / 30000 ≈ 16.27%
+    expect(result.effectiveRate).toBeCloseTo(4880.4 / 30000, 4);
+  });
+
+  it('is correct for higher rate taxpayer at £75,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 75000 }), rules);
+    // Tax: 37700*0.20 + 24730*0.40 = 7540 + 9892 = 17432
+    // NI:  37700*0.08 + 24730*0.02 = 3016 + 494.60 = 3510.60
+    // Total: 20942.60
+    expect(result.effectiveRate).toBeCloseTo(20942.6 / 75000, 4);
+  });
+
+  it('is correct for additional rate taxpayer at £200,000', () => {
+    const result = calculateTax(makeInput({ grossSalary: 200000 }), rules);
+    // Tax: 7540 + 34976 + 33687 = 76203
+    // NI:  3016 + 2994.60 = 6010.60
+    // Total: 82213.60
+    expect(result.effectiveRate).toBeCloseTo(82213.6 / 200000, 4);
+  });
+});
+
+// --- SIPP in PA taper zone ---
+
+describe('SIPP restoring personal allowance', () => {
+  it('SIPP contribution restores PA in taper zone', () => {
+    // £110k income, PA tapered to £7,570
+    const withoutSipp = calculateTax(makeInput({ grossSalary: 110000 }), rules);
+    expect(withoutSipp.personalAllowance).toBe(7570);
+
+    // £10k SIPP brings adjusted net income to £100k → full PA restored
+    const withSipp = calculateTax(
+      makeInput({ grossSalary: 110000, sippContribution: 10000 }),
+      rules,
+    );
+    expect(withSipp.adjustedNetIncome).toBe(100000);
+    expect(withSipp.personalAllowance).toBe(12570);
+
+    // Tax saving should reflect restored PA + basic rate on SIPP
+    expect(withSipp.incomeTax).toBeLessThan(withoutSipp.incomeTax);
+  });
+
+  it('SIPP relief captures PA restoration benefit', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 110000, sippContribution: 10000 }),
+      rules,
+    );
+
+    // Without SIPP: adjusted = £110k, PA = £7,570, taxable = £102,430
+    //   Tax = 37700*0.20 + 64730*0.40 = 7540 + 25892 = 33432
+    // With SIPP: adjusted = £100k, PA = £12,570, taxable = £87,430
+    //   Tax = 37700*0.20 + 49730*0.40 = 7540 + 19892 = 27432
+    // Total relief = 33432 - 27432 = 6000
+    expect(result.sippRelief.totalRelief).toBeCloseTo(6000, 2);
+    // Basic rate relief = 2000, self-assessment = 4000
+    expect(result.sippRelief.basicRateRelief).toBe(2000);
+    expect(result.sippRelief.selfAssessmentRelief).toBeCloseTo(4000, 2);
+  });
+});
+
+// --- Student loan with salary sacrifice ---
+
+describe('student loan with salary sacrifice', () => {
+  it('salary sacrifice reduces student loan repayment base', () => {
+    const withoutSS = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const withSS = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+      }),
+      rules,
+    );
+
+    // Without SS: (40000 - 28470) * 0.09 = 1037.70
+    expect(withoutSS.studentLoanRepayment).toBeCloseTo(1037.7, 2);
+    // With SS: NI-able = 40000 - 2000 = 38000, (38000 - 28470) * 0.09 = 857.70
+    expect(withSS.studentLoanRepayment).toBeCloseTo(857.7, 2);
+    expect(withSS.studentLoanRepayment).toBeLessThan(
+      withoutSS.studentLoanRepayment,
+    );
+  });
+
+  it('SIPP does NOT reduce student loan repayment', () => {
+    const withSipp = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+        sippContribution: 5000,
+      }),
+      rules,
+    );
+    const withoutSipp = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+
+    expect(withSipp.studentLoanRepayment).toBeCloseTo(
+      withoutSipp.studentLoanRepayment,
+      2,
+    );
+  });
+});
+
+// --- Employer pension ---
+
+describe('employer pension contribution', () => {
+  it('calculates percentage employer pension', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 60000,
+        employerPensionContribution: { type: 'percentage', value: 5 },
+      }),
+      rules,
+    );
+
+    expect(result.employerPensionContribution).toBe(3000);
+    // Employer pension does not affect tax, NI, or take-home
+    expect(result.incomeTax).toBeCloseTo(
+      calculateTax(makeInput({ grossSalary: 60000 }), rules).incomeTax,
+      2,
+    );
+    expect(result.netAnnualPay).toBeCloseTo(
+      calculateTax(makeInput({ grossSalary: 60000 }), rules).netAnnualPay,
+      2,
+    );
+  });
+
+  it('calculates fixed employer pension', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 60000,
+        employerPensionContribution: { type: 'fixed', value: 4000 },
+      }),
+      rules,
+    );
+
+    expect(result.employerPensionContribution).toBe(4000);
+  });
+
+  it('includes employer pension in total pension contributions', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 60000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        employerPensionContribution: { type: 'percentage', value: 3 },
+        sippContribution: 2000,
+      }),
+      rules,
+    );
+
+    // Total = employee(3000) + employer(1800) + passback(0) + SIPP(2000)
+    expect(result.totalPensionContributions).toBeCloseTo(
+      3000 + 1800 + 0 + 2000,
+      2,
+    );
+  });
+});
+
+// --- SIPP at additional rate ---
+
+describe('SIPP relief at additional rate', () => {
+  it('provides 45% relief on additional rate income', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 200000,
+        sippContribution: 10000,
+      }),
+      rules,
+    );
+
+    // All £10k SIPP sits in the additional rate band
+    // Total relief = 10000 * 0.45 = 4500
+    expect(result.sippRelief.totalRelief).toBeCloseTo(4500, 2);
+    expect(result.sippRelief.basicRateRelief).toBe(2000);
+    expect(result.sippRelief.selfAssessmentRelief).toBeCloseTo(2500, 2);
+    expect(result.sippRelief.effectiveCost).toBeCloseTo(5500, 2);
+  });
+});
+
+// --- Bonus pushes into higher rate ---
+
+describe('bonus tax interactions', () => {
+  it('bonus pushes salary into higher rate band', () => {
+    // £48k salary is all basic rate
+    const salaryOnly = calculateTax(makeInput({ grossSalary: 48000 }), rules);
+    // £48k + £10k bonus crosses into higher rate
+    const withBonus = calculateTax(
+      makeInput({ grossSalary: 48000, bonus: 10000 }),
+      rules,
+    );
+
+    // Salary only: taxable = 48000 - 12570 = 35430, all basic rate
+    expect(salaryOnly.incomeTaxBands).toHaveLength(1);
+    // With bonus: taxable = 58000 - 12570 = 45430, crosses into higher rate at 37700
+    expect(withBonus.incomeTaxBands).toHaveLength(2);
+    expect(withBonus.incomeTaxBands[1].name).toBe('Higher rate');
+    expect(withBonus.incomeTaxBands[1].amount).toBeCloseTo(45430 - 37700, 2);
+  });
+
+  it('bonus is NI-able', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 40000, bonus: 15000 }),
+      rules,
+    );
+    // NI-able = 40000 + 15000 = 55000
+    expect(result.niableIncome).toBe(55000);
+    // NI: (50270-12570)*0.08 + (55000-50270)*0.02 = 3016 + 94.60 = 3110.60
+    expect(result.nationalInsurance).toBeCloseTo(3110.6, 2);
+  });
+});
+
+// --- BIK edge cases ---
+
+describe('BIK tax treatment', () => {
+  it('BIK does not affect student loan repayment', () => {
+    const withBik = calculateTax(
+      makeInput({
+        grossSalary: 35000,
+        taxableBenefits: 5000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const withoutBik = calculateTax(
+      makeInput({
+        grossSalary: 35000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+
+    // Student loan based on NI-able income which excludes BIK
+    expect(withBik.studentLoanRepayment).toBeCloseTo(
+      withoutBik.studentLoanRepayment,
+      2,
+    );
+  });
+
+  it('BIK affects PA tapering', () => {
+    // £98k salary + £5k BIK → adjusted = £103k, PA tapered
+    const result = calculateTax(
+      makeInput({ grossSalary: 98000, taxableBenefits: 5000 }),
+      rules,
+    );
+    // PA: 12570 - floor((103000-100000)*0.5) = 12570 - 1500 = 11070
+    expect(result.personalAllowance).toBe(11070);
+  });
+});
+
+// --- Net pay integrity with all components ---
+
+describe('net pay integrity', () => {
+  it('deductions + net = gross with bonus + BIK + RSUs', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 60000,
+        bonus: 5000,
+        taxableBenefits: 3000,
+        rsuVests: 15000,
+      }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
+  });
+
+  it('deductions + net = gross with all deductions', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 100000,
+        bonus: 10000,
+        taxableBenefits: 5000,
+        rsuVests: 20000,
+        pensionContribution: {
+          type: 'percentage',
+          value: 8,
+          salarySacrifice: true,
+        },
+        sippContribution: 10000,
+        undergraduatePlan: 'plan1',
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
+  });
+});
+
+// --- Edge cases at exact thresholds ---
+
+describe('exact threshold boundaries', () => {
+  it('£1 above personal allowance triggers tax', () => {
+    const result = calculateTax(makeInput({ grossSalary: 12571 }), rules);
+    expect(result.incomeTax).toBeCloseTo(0.2, 2);
+    expect(result.nationalInsurance).toBeCloseTo(0.08, 2);
+  });
+
+  it('salary at top of basic rate band', () => {
+    // PA + basic band = 12570 + 37700 = 50270
+    const result = calculateTax(makeInput({ grossSalary: 50270 }), rules);
+    // All taxable income in basic rate: 37700 * 0.20 = 7540
+    expect(result.incomeTax).toBeCloseTo(7540, 2);
+    expect(result.incomeTaxBands).toHaveLength(1);
+    expect(result.incomeTaxBands[0].name).toBe('Basic rate');
+  });
+
+  it('£1 above basic rate band triggers higher rate', () => {
+    const result = calculateTax(makeInput({ grossSalary: 50271 }), rules);
+    expect(result.incomeTaxBands).toHaveLength(2);
+    expect(result.incomeTaxBands[1].name).toBe('Higher rate');
+    expect(result.incomeTaxBands[1].amount).toBeCloseTo(1, 2);
+    expect(result.incomeTaxBands[1].tax).toBeCloseTo(0.4, 2);
+  });
+
+  it('salary at exact PA taper start (£100,000)', () => {
+    const result = calculateTax(makeInput({ grossSalary: 100000 }), rules);
+    expect(result.personalAllowance).toBe(12570);
+  });
+
+  it('£1 above PA taper start reduces PA', () => {
+    const result = calculateTax(makeInput({ grossSalary: 100001 }), rules);
+    // floor((100001-100000)*0.5) = floor(0.5) = 0 — £1 isn't enough for floor
+    // Need £2 over to lose £1 of PA
+    expect(result.personalAllowance).toBe(12570);
+  });
+
+  it('£2 above PA taper start reduces PA by £1', () => {
+    const result = calculateTax(makeInput({ grossSalary: 100002 }), rules);
+    expect(result.personalAllowance).toBe(12569);
+  });
+});
