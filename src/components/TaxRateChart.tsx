@@ -34,6 +34,10 @@ function computeRatesAtIncome(
   baseInput: CalculatorInput,
   rules: TaxRules,
 ): DataPoint {
+  // Show the underlying tax system rates (tax + NI + student loan) without
+  // pension/SIPP distortion. Pension is a personal choice, not a tax — it
+  // shouldn't shift the rate curves. Student loan IS included since it's a
+  // mandatory deduction based on income.
   const r = calculateTax(
     {
       ...baseInput,
@@ -42,6 +46,10 @@ function computeRatesAtIncome(
       taxableBenefits: 0,
       rsuVests: 0,
       rsuTaxWithheld: false,
+      pensionContribution: { type: 'fixed', value: 0, salarySacrifice: false },
+      employerPensionContribution: { type: 'fixed', value: 0 },
+      employerNiPassbackPercent: 0,
+      sippContribution: 0,
     },
     rules,
   );
