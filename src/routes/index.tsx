@@ -314,7 +314,7 @@ function HomePage() {
           stored or sent anywhere unless you share your URL.
         </p>
         <p className="mt-1">
-          By{' '}
+          An experiment by{' '}
           <a
             href="https://mcky.dev"
             className="underline hover:text-neutral-600 dark:hover:text-neutral-300"
