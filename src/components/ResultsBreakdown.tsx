@@ -23,14 +23,14 @@ function Row({
 }) {
   const valueColor =
     highlight === 'green'
-      ? 'text-green-700'
+      ? 'text-green-700 dark:text-green-400'
       : highlight === 'red'
-        ? 'text-red-600'
-        : 'text-gray-900';
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-neutral-900 dark:text-neutral-100';
 
   return (
     <div className={`flex justify-between py-1 ${bold ? 'font-semibold' : ''}`}>
-      <span className="text-gray-600">{label}</span>
+      <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
       <span className={valueColor}>{value}</span>
     </div>
   );
@@ -44,10 +44,10 @@ function BandTable({
   if (bands.length === 0) return null;
 
   return (
-    <div className="mt-1 overflow-hidden rounded border border-gray-200">
+    <div className="mt-1 overflow-hidden rounded border border-neutral-200 dark:border-neutral-700">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 text-left text-xs text-gray-500">
+          <tr className="bg-neutral-50 text-left text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
             <th className="px-3 py-1.5">Band</th>
             <th className="px-3 py-1.5 text-right">Amount</th>
             <th className="px-3 py-1.5 text-right">Rate</th>
@@ -56,15 +56,20 @@ function BandTable({
         </thead>
         <tbody>
           {bands.map((band) => (
-            <tr key={band.name} className="border-t border-gray-100">
-              <td className="px-3 py-1.5 text-gray-700">{band.name}</td>
-              <td className="px-3 py-1.5 text-right text-gray-700">
+            <tr
+              key={band.name}
+              className="border-t border-neutral-100 dark:border-neutral-700"
+            >
+              <td className="px-3 py-1.5 text-neutral-700 dark:text-neutral-300">
+                {band.name}
+              </td>
+              <td className="px-3 py-1.5 text-right text-neutral-700 dark:text-neutral-300">
                 {formatCurrency(band.amount)}
               </td>
-              <td className="px-3 py-1.5 text-right text-gray-700">
+              <td className="px-3 py-1.5 text-right text-neutral-700 dark:text-neutral-300">
                 {formatPercentage(band.rate)}
               </td>
-              <td className="px-3 py-1.5 text-right text-gray-900">
+              <td className="px-3 py-1.5 text-right text-neutral-900 dark:text-neutral-100">
                 {formatCurrency(band.tax)}
               </td>
             </tr>
@@ -83,7 +88,7 @@ export function ResultsBreakdown({
   return (
     <div className="space-y-5">
       {/* Summary card */}
-      <div className="rounded-lg bg-blue-50 p-4">
+      <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/30">
         <Row
           label="Total gross income"
           value={formatCurrency(result.totalGrossIncome)}
@@ -95,7 +100,7 @@ export function ResultsBreakdown({
           bold
           highlight="red"
         />
-        <div className="my-2 border-t border-blue-200" />
+        <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
         <Row
           label="Annual take-home"
           value={formatCurrency(result.netAnnualPay)}
@@ -108,7 +113,7 @@ export function ResultsBreakdown({
           bold
           highlight="green"
         />
-        <div className="my-2 border-t border-blue-200" />
+        <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
         <div className="text-sm">
           <Row
             label="Effective tax rate"
@@ -127,13 +132,13 @@ export function ResultsBreakdown({
             value={formatCurrency(result.adjustedNetIncome)}
           />
           {result.adjustedNetIncome <= 100000 && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {formatCurrency(100000 - result.adjustedNetIncome)} below the
               £100k taper threshold
             </p>
           )}
           {result.personalAllowance < 12570 && result.personalAllowance > 0 && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-amber-600 dark:text-amber-400">
               In the £100k–£125,140 taper zone — 60% marginal rate.{' '}
               {formatCurrency(125140 - result.adjustedNetIncome)} until fully
               tapered.
@@ -141,7 +146,7 @@ export function ResultsBreakdown({
           )}
           {result.personalAllowance === 0 &&
             result.adjustedNetIncome > 100000 && (
-              <p className="text-xs text-amber-600">
+              <p className="text-xs text-amber-600 dark:text-amber-400">
                 Fully tapered — income exceeds £125,140
               </p>
             )}
@@ -150,7 +155,7 @@ export function ResultsBreakdown({
         <IncomeBreakdownChart result={result} />
         {result.rsuVests > 0 && (
           <>
-            <div className="my-2 border-t border-blue-200" />
+            <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
             <p className="mb-1 text-xs font-medium text-blue-700">RSUs</p>
             <div className="text-sm">
               <Row
@@ -166,7 +171,7 @@ export function ResultsBreakdown({
               )}
               {result.rsuPerVest && (
                 <>
-                  <div className="my-1 border-t border-blue-200" />
+                  <div className="my-1 border-t border-blue-200 dark:border-blue-800" />
                   <Row
                     label={`Per vest (${result.rsuPerVest.vestingPeriods}x/year)`}
                     value={formatCurrency(result.rsuPerVest.grossPerVest)}
@@ -185,7 +190,7 @@ export function ResultsBreakdown({
         )}
         {result.payeMonthlyPay !== null && (
           <>
-            <div className="my-2 border-t border-blue-200" />
+            <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
             <p className="mb-1 text-xs font-medium text-blue-700">
               Monthly payslip
             </p>
@@ -201,7 +206,7 @@ export function ResultsBreakdown({
               </p>
               {result.vestMonthTotal !== null && result.rsuPerVest && (
                 <>
-                  <div className="my-1 border-t border-blue-200" />
+                  <div className="my-1 border-t border-blue-200 dark:border-blue-800" />
                   <Row
                     label={`Vest month total (${result.rsuPerVest.vestingPeriods}x/year)`}
                     value={formatCurrency(result.vestMonthTotal)}
@@ -221,7 +226,9 @@ export function ResultsBreakdown({
 
       {/* Income */}
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-gray-900">Income</h3>
+        <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+          Income
+        </h3>
         <div className="text-sm">
           <Row label="Salary" value={formatCurrency(result.grossSalary)} />
           {result.bonus > 0 && (
@@ -248,7 +255,7 @@ export function ResultsBreakdown({
       {/* RSU Withholding */}
       {result.rsuWithholding && (
         <section>
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             RSU Tax Withholding
           </h3>
           <div className="text-sm">
@@ -275,7 +282,7 @@ export function ResultsBreakdown({
               highlight="green"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Withholding is a prepayment — any overpayment is refunded via
             self-assessment
           </p>
@@ -288,7 +295,7 @@ export function ResultsBreakdown({
         result.employerNiPassback > 0 ||
         result.sippContribution > 0) && (
         <section>
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Pension Contributions
           </h3>
           <div className="text-sm">
@@ -316,8 +323,8 @@ export function ResultsBreakdown({
                   label="SIPP (gross contribution)"
                   value={`-${formatCurrency(result.sippContribution)}`}
                 />
-                <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 p-3">
-                  <p className="mb-1.5 text-xs font-semibold text-emerald-800">
+                <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 p-3">
+                  <p className="mb-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
                     SIPP Tax Relief
                   </p>
                   <Row
@@ -325,7 +332,7 @@ export function ResultsBreakdown({
                     value={formatCurrency(result.sippRelief.basicRateRelief)}
                     highlight="green"
                   />
-                  <p className="mt-0.5 text-xs text-emerald-700">
+                  <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
                     Claimed by your provider — you only pay{' '}
                     {formatCurrency(
                       result.sippRelief.grossContribution -
@@ -334,7 +341,7 @@ export function ResultsBreakdown({
                   </p>
                   {result.sippRelief.selfAssessmentRelief > 0 && (
                     <>
-                      <div className="my-1.5 border-t border-emerald-200" />
+                      <div className="my-1.5 border-t border-emerald-200 dark:border-emerald-800" />
                       <Row
                         label="Additional relief via self-assessment"
                         value={formatCurrency(
@@ -342,13 +349,13 @@ export function ResultsBreakdown({
                         )}
                         highlight="green"
                       />
-                      <p className="mt-0.5 text-xs text-emerald-700">
+                      <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
                         Claim on your tax return as a higher/additional rate
                         taxpayer
                       </p>
                     </>
                   )}
-                  <div className="my-1.5 border-t border-emerald-200" />
+                  <div className="my-1.5 border-t border-emerald-200 dark:border-emerald-800" />
                   <Row
                     label="Total tax relief"
                     value={formatCurrency(result.sippRelief.totalRelief)}
@@ -365,7 +372,7 @@ export function ResultsBreakdown({
             )}
             {result.totalPensionContributions > 0 && (
               <>
-                <div className="mt-2 border-t border-gray-200 pt-2">
+                <div className="mt-2 border-t border-neutral-200 dark:border-neutral-700 pt-2">
                   <Row
                     label="Total going into pension"
                     value={formatCurrency(result.totalPensionContributions)}
@@ -380,7 +387,7 @@ export function ResultsBreakdown({
 
       {/* Personal Allowance */}
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-gray-900">
+        <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Personal Allowance
         </h3>
         <div className="text-sm">
@@ -389,7 +396,7 @@ export function ResultsBreakdown({
             value={formatCurrency(result.personalAllowance)}
           />
           {result.personalAllowance < 12570 && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-amber-600 dark:text-amber-400">
               Reduced from £12,570 due to income over £100,000
             </p>
           )}
@@ -398,7 +405,9 @@ export function ResultsBreakdown({
 
       {/* Income Tax */}
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-gray-900">Income Tax</h3>
+        <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+          Income Tax
+        </h3>
         <BandTable bands={result.incomeTaxBands} />
         <div className="mt-1 text-sm">
           <Row
@@ -412,7 +421,7 @@ export function ResultsBreakdown({
 
       {/* National Insurance */}
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-gray-900">
+        <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           National Insurance
         </h3>
         <BandTable bands={result.niBands} />
@@ -429,7 +438,7 @@ export function ResultsBreakdown({
       {/* Class 4 NI */}
       {result.class4Ni > 0 && (
         <section>
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Class 4 National Insurance
           </h3>
           <BandTable bands={result.class4NiBands} />
@@ -447,7 +456,7 @@ export function ResultsBreakdown({
       {/* Child Benefit */}
       {result.childBenefit && (
         <section>
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Child Benefit
           </h3>
           <div className="text-sm">
@@ -475,7 +484,7 @@ export function ResultsBreakdown({
             )}
             {result.childBenefit.hicbcCharge > 0 &&
               result.childBenefit.netChildBenefit <= 0 && (
-                <p className="mt-1 text-xs text-amber-600">
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                   Income exceeds{' '}
                   {formatCurrency(taxRules.childBenefit.hicbc.upperThreshold)} —
                   benefit fully clawed back via HICBC
@@ -483,7 +492,7 @@ export function ResultsBreakdown({
               )}
             {result.childBenefit.hicbcCharge > 0 &&
               result.childBenefit.netChildBenefit > 0 && (
-                <p className="mt-1 text-xs text-amber-600">
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                   HICBC applies — 1% of benefit clawed back per{' '}
                   {formatCurrency(
                     (taxRules.childBenefit.hicbc.upperThreshold -
@@ -500,7 +509,7 @@ export function ResultsBreakdown({
       {/* Student Loan */}
       {result.studentLoanRepayment > 0 && (
         <section>
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Student Loan
           </h3>
           <div className="text-sm">

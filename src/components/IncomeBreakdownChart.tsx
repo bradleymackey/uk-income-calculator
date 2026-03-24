@@ -209,7 +209,7 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
 
   return (
     <div className="mt-4">
-      <p className="mb-1 text-xs font-medium text-gray-500">
+      <p className="mb-1 text-xs font-medium text-neutral-500 dark:text-neutral-400">
         Where your income goes
       </p>
       <div style={{ width: '100%', height: 300 }}>
@@ -240,7 +240,7 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-gray-500">
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
         {slices.map((slice, i) => (
           <span
             key={i}

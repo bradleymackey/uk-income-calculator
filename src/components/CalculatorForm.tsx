@@ -53,7 +53,7 @@ function ToggleButton({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-50"
+      className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-600 shadow-sm hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
     >
       + {label}
     </button>
@@ -70,13 +70,15 @@ function OptionalCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative rounded-lg border border-gray-200 bg-gray-50/50 p-3 pt-2">
+    <div className="relative rounded-lg border border-neutral-200 bg-neutral-50/50 p-3 pt-2 dark:border-neutral-700 dark:bg-neutral-800/50">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500">{label}</span>
+        <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+          {label}
+        </span>
         <button
           type="button"
           onClick={onRemove}
-          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-red-400 hover:bg-red-50 hover:text-red-600"
+          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
           title={`Remove ${label}`}
         >
           <svg
@@ -231,17 +233,19 @@ export function CalculatorForm({
   );
 
   return (
-    <div className="divide-y divide-gray-200">
+    <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
       <section className="py-5 first:pt-0 last:pb-0">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">About me</h2>
+        <h2 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+          About me
+        </h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
             I live in
           </label>
           <select
             value={input.country}
             onChange={(e) => update({ country: e.target.value as Country })}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
           >
             <option value="england">
               {
@@ -257,13 +261,13 @@ export function CalculatorForm({
             </option>
           </select>
           {input.country === 'scotland' && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
               Scottish income tax rates apply. NI and student loans are UK-wide.
             </p>
           )}
         </div>
         <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
             NI category
           </label>
           <select
@@ -271,29 +275,29 @@ export function CalculatorForm({
             onChange={(e) =>
               update({ niCategory: e.target.value as NiCategory })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
           >
             <option value="A">A — Standard</option>
             <option value="C">C — Over state pension age</option>
             <option value="X">X — NI exempt</option>
           </select>
           {input.niCategory === 'C' && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
               No employee National Insurance contributions
             </p>
           )}
           {input.niCategory === 'X' && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
               No employee or employer National Insurance contributions
             </p>
           )}
         </div>
-        <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+        <label className="mt-3 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
           <input
             type="checkbox"
             checked={input.isBlind}
             onChange={(e) => update({ isBlind: e.target.checked })}
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
           />
           Registered blind or severely sight impaired
         </label>
@@ -362,19 +366,19 @@ export function CalculatorForm({
                       min={1}
                       tooltip="How many times per year your RSUs vest (e.g. 4 for quarterly, 12 for monthly). Affects how the tax burden is spread across your payslips."
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                       <input
                         type="checkbox"
                         checked={input.rsuTaxWithheld}
                         onChange={(e) =>
                           update({ rsuTaxWithheld: e.target.checked })
                         }
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
                       />
                       Tax withheld on vest (45% tax + 2% NI)
                       <Tooltip content="Your employer sells shares at vest to cover tax. The standard withholding rate is 45% income tax + 2% NI. Any overpayment is refunded via self-assessment.">
                         <svg
-                          className="h-3.5 w-3.5 text-gray-400"
+                          className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -461,25 +465,25 @@ export function CalculatorForm({
                       type: e.target.value as 'percentage' | 'fixed',
                     })
                   }
-                  className="mb-[1px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="mb-[1px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
                 >
                   <option value="percentage">%</option>
                   <option value="fixed">£</option>
                 </select>
               </div>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                 <input
                   type="checkbox"
                   checked={input.pensionContribution.salarySacrifice}
                   onChange={(e) =>
                     updatePension({ salarySacrifice: e.target.checked })
                   }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
                 />
                 Salary sacrifice
                 <Tooltip content="Your gross salary is reduced by the pension amount before tax and NI are calculated, saving both income tax and National Insurance.">
                   <svg
-                    className="h-3.5 w-3.5 text-gray-400"
+                    className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -494,10 +498,10 @@ export function CalculatorForm({
               {input.pensionContribution.salarySacrifice && (
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                       Employer NI savings passback
                     </label>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                       {input.employerNiPassbackPercent}%
                     </span>
                   </div>
@@ -514,7 +518,7 @@ export function CalculatorForm({
                     }
                     className="mt-1 w-full accent-blue-600"
                   />
-                  <p className="mt-0.5 text-xs text-gray-500">
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                     When you salary sacrifice, your employer also saves on NI.
                     Some employers pass a percentage of this saving into your
                     pension.
@@ -555,7 +559,7 @@ export function CalculatorForm({
                           type: e.target.value as 'percentage' | 'fixed',
                         })
                       }
-                      className="mb-[1px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="mb-[1px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
                     >
                       <option value="percentage">%</option>
                       <option value="fixed">£</option>
@@ -592,7 +596,7 @@ export function CalculatorForm({
                           sippInputType: e.target.value as 'gross' | 'net',
                         })
                       }
-                      className="mb-[1px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="mb-[1px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
                     >
                       <option value="gross">Gross</option>
                       <option value="net">Net (paid)</option>
@@ -624,7 +628,7 @@ export function CalculatorForm({
               tooltip="Number of children you receive Child Benefit for. The High Income Child Benefit Charge (HICBC) applies if your adjusted net income exceeds £60,000."
             />
             {input.numberOfChildren > 0 && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {formatCurrency(
                   taxRules.childBenefit.weeklyRateFirstChild *
                     taxRules.childBenefit.weeksPerYear +
@@ -660,7 +664,7 @@ export function CalculatorForm({
                 const isChecked = input.undergraduatePlans.includes(planId);
                 return (
                   <div key={planId}>
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -672,12 +676,12 @@ export function CalculatorForm({
                               );
                           update({ undergraduatePlans: plans });
                         }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
                       />
                       {label}
                     </label>
                     {isChecked && (
-                      <p className="ml-6 text-xs text-gray-500">
+                      <p className="ml-6 text-xs text-neutral-500 dark:text-neutral-400">
                         Threshold: {formatCurrency(plan.threshold)}
                       </p>
                     )}
@@ -685,20 +689,20 @@ export function CalculatorForm({
                 );
               })}
               <div>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                   <input
                     type="checkbox"
                     checked={input.hasPostgraduateLoan}
                     onChange={(e) =>
                       update({ hasPostgraduateLoan: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
                   />
                   Postgraduate Loan
                 </label>
                 {input.hasPostgraduateLoan &&
                   taxRules.studentLoans['postgraduate'] && (
-                    <p className="ml-6 text-xs text-gray-500">
+                    <p className="ml-6 text-xs text-neutral-500 dark:text-neutral-400">
                       {formatPercentage(
                         taxRules.studentLoans['postgraduate'].rate,
                       )}{' '}
@@ -711,7 +715,7 @@ export function CalculatorForm({
               </div>
             </div>
             {input.undergraduatePlans.length > 0 && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 9% repayment on income above the lowest threshold
                 {input.undergraduatePlans.length > 1 &&
                   ' (single deduction across all plans)'}

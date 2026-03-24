@@ -93,11 +93,15 @@ function CustomTooltip({ active, payload }: any) {
   if (!point) return null;
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-semibold text-gray-900">
+    <div className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs shadow-md dark:border-neutral-700 dark:bg-neutral-800">
+      <p className="font-semibold text-neutral-900 dark:text-neutral-100">
         {formatIncomeExact(point.income)}
       </p>
-      {point.label && <p className="mb-1 text-gray-500">{point.label}</p>}
+      {point.label && (
+        <p className="mb-1 text-neutral-500 dark:text-neutral-400">
+          {point.label}
+        </p>
+      )}
       <p className="text-red-500">Marginal: {point.marginal.toFixed(1)}%</p>
       <p className="text-blue-500">Effective: {point.effective.toFixed(1)}%</p>
     </div>
@@ -313,7 +317,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
 
   return (
     <div className="mt-3">
-      <p className="mb-2 text-xs font-medium text-gray-500">
+      <p className="mb-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
         Tax rate by income
       </p>
       <div style={{ width: '100%', height: 200 }}>
@@ -322,20 +326,24 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
             data={data}
             margin={{ top: 5, right: 5, bottom: 5, left: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#a3a3a3"
+              strokeOpacity={0.3}
+            />
             <XAxis
               dataKey="income"
               type="number"
               tickFormatter={formatIncome}
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#d1d5db"
+              tick={{ fontSize: 9, fill: '#737373' }}
+              stroke="#a3a3a3"
               domain={[0, Math.round(adjustedIncome)]}
               ticks={ticks}
             />
             <YAxis
               tickFormatter={(v) => `${v}%`}
-              tick={{ fontSize: 10, fill: '#6b7280' }}
-              stroke="#d1d5db"
+              tick={{ fontSize: 10, fill: '#737373' }}
+              stroke="#a3a3a3"
               domain={[0, yMax]}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -359,7 +367,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
             />
             <ReferenceLine
               x={Math.round(adjustedIncome)}
-              stroke="#6b7280"
+              stroke="#737373"
               strokeDasharray="4 4"
               strokeWidth={1}
             />
@@ -382,7 +390,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-1 flex justify-center gap-4 text-xs text-gray-500">
+      <div className="mt-1 flex justify-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-3 rounded-sm bg-red-500" />
           Marginal
@@ -392,7 +400,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
           Effective
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-0.5 w-3 border-t border-dashed border-gray-500" />
+          <span className="inline-block h-0.5 w-3 border-t border-dashed border-neutral-500 dark:border-neutral-400" />
           You
         </span>
       </div>

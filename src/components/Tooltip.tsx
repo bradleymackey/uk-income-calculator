@@ -32,7 +32,7 @@ export function Tooltip({ content, children }: TooltipProps) {
         <div
           ref={tooltipRef}
           role="tooltip"
-          className={`absolute left-1/2 z-50 w-56 -translate-x-1/2 rounded-md bg-gray-900 px-3 py-2 text-xs text-white shadow-lg ${
+          className={`absolute left-1/2 z-50 w-56 -translate-x-1/2 rounded-md bg-neutral-900 px-3 py-2 text-xs text-white shadow-lg dark:bg-neutral-100 dark:text-neutral-900 ${
             position === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
           }`}
         >
@@ -40,8 +40,8 @@ export function Tooltip({ content, children }: TooltipProps) {
           <div
             className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
               position === 'bottom'
-                ? 'bottom-full border-b-gray-900'
-                : 'top-full border-t-gray-900'
+                ? 'bottom-full border-b-neutral-900 dark:border-b-neutral-100'
+                : 'top-full border-t-neutral-900 dark:border-t-neutral-100'
             }`}
           />
         </div>

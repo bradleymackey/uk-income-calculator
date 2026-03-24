@@ -11,6 +11,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { name: 'color-scheme', content: 'light dark' },
       { title: 'UK Income Tax Calculator' },
     ],
     links: [
@@ -37,7 +38,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
         {children}
         <Scripts />
       </body>

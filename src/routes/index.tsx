@@ -200,7 +200,7 @@ function TaxYearBadge({ taxYear }: { taxYear: string }) {
 
   if (status.kind === 'historical') {
     return (
-      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-500 dark:bg-neutral-800 dark:text-neutral-300">
         Historical
       </span>
     );
@@ -208,14 +208,14 @@ function TaxYearBadge({ taxYear }: { taxYear: string }) {
 
   if (status.kind === 'upcoming') {
     return (
-      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
         Upcoming
       </span>
     );
   }
 
   return (
-    <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+    <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400">
       Week {status.week} &middot; {status.daysRemaining} days left
     </span>
   );
@@ -251,17 +251,17 @@ function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
             UK Income Tax Calculator
           </h1>
-          <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
             <select
               value={taxYear}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm font-medium text-neutral-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -274,15 +274,15 @@ function HomePage() {
         </header>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <CalculatorForm
               input={input}
               onChange={handleInputChange}
               taxRules={rules}
             />
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
+            <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Take-Home Pay Breakdown
             </h2>
             <ResultsBreakdown input={input} result={result} taxRules={rules} />
