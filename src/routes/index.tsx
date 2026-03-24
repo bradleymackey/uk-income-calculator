@@ -244,7 +244,7 @@ function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8">
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">
               UK Income Tax Calculator
             </h1>
