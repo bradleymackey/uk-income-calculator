@@ -40,38 +40,38 @@ function ToggleButton({
   );
 }
 
-function RemoveButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-5 w-5 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600"
-      title="Remove"
-    >
-      <svg
-        className="h-3 w-3"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2.5}
-      >
-        <path d="M18 12H6" />
-      </svg>
-    </button>
-  );
-}
-
-function FieldHeader({
+function OptionalCard({
   label,
   onRemove,
+  children,
 }: {
   label: string;
   onRemove: () => void;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs font-medium text-gray-500">{label}</span>
-      <RemoveButton onClick={onRemove} />
+    <div className="relative rounded-lg border border-gray-200 bg-gray-50/50 p-3 pt-2">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-500">{label}</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-red-400 hover:bg-red-50 hover:text-red-600"
+          title={`Remove ${label}`}
+        >
+          <svg
+            className="h-3 w-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Remove
+        </button>
+      </div>
+      <div className="space-y-3">{children}</div>
     </div>
   );
 }
@@ -158,8 +158,7 @@ export function CalculatorForm({
             tooltip="Your total annual salary before any deductions, as stated in your employment contract."
           />
           {isVisible('bonus') && (
-            <>
-              <FieldHeader label="Bonus" onRemove={() => hide('bonus')} />
+            <OptionalCard label="Bonus" onRemove={() => hide('bonus')}>
               <InputField
                 label="Annual bonus"
                 value={input.bonus || ''}
@@ -167,14 +166,13 @@ export function CalculatorForm({
                 prefix="£"
                 tooltip="Total expected bonus for the tax year. Taxed as regular income via PAYE."
               />
-            </>
+            </OptionalCard>
           )}
           {isVisible('benefits') && (
-            <>
-              <FieldHeader
-                label="Taxable benefits"
-                onRemove={() => hide('benefits')}
-              />
+            <OptionalCard
+              label="Taxable benefits"
+              onRemove={() => hide('benefits')}
+            >
               <InputField
                 label="Taxable benefits (BIK)"
                 value={input.taxableBenefits || ''}
@@ -184,11 +182,10 @@ export function CalculatorForm({
                 prefix="£"
                 tooltip="Benefits in kind such as company car, private medical insurance, or gym membership. These increase your tax but are not cash income. Check your P11D for the value."
               />
-            </>
+            </OptionalCard>
           )}
           {isVisible('rsus') && (
-            <>
-              <FieldHeader label="RSUs" onRemove={() => hide('rsus')} />
+            <OptionalCard label="RSUs" onRemove={() => hide('rsus')}>
               <InputField
                 label="RSU vests (annual value)"
                 value={input.rsuVests || ''}
@@ -239,7 +236,7 @@ export function CalculatorForm({
                   </label>
                 </>
               )}
-            </>
+            </OptionalCard>
           )}
         </div>
       </section>
@@ -314,11 +311,10 @@ export function CalculatorForm({
             />
           )}
           {isVisible('employerPension') && (
-            <>
-              <FieldHeader
-                label="Employer pension"
-                onRemove={() => hide('employerPension')}
-              />
+            <OptionalCard
+              label="Employer pension"
+              onRemove={() => hide('employerPension')}
+            >
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <InputField
@@ -353,11 +349,10 @@ export function CalculatorForm({
                   <option value="fixed">£</option>
                 </select>
               </div>
-            </>
+            </OptionalCard>
           )}
           {isVisible('sipp') && (
-            <>
-              <FieldHeader label="SIPP" onRemove={() => hide('sipp')} />
+            <OptionalCard label="SIPP" onRemove={() => hide('sipp')}>
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <InputField
@@ -391,20 +386,17 @@ export function CalculatorForm({
                   <option value="net">Net (paid)</option>
                 </select>
               </div>
-            </>
+            </OptionalCard>
           )}
         </div>
       </section>
 
       {isVisible('studentLoan') && (
         <section className="py-5 first:pt-0 last:pb-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Student Loan
-            </h2>
-            <RemoveButton onClick={() => hide('studentLoan')} />
-          </div>
-          <div className="mt-3 space-y-3">
+          <OptionalCard
+            label="Student Loan"
+            onRemove={() => hide('studentLoan')}
+          >
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Undergraduate plan
@@ -462,7 +454,7 @@ export function CalculatorForm({
                   </p>
                 )}
             </div>
-          </div>
+          </OptionalCard>
         </section>
       )}
 
