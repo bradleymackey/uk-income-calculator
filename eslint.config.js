@@ -14,7 +14,6 @@ export default tseslint.config(
       '.vinxi',
       '.tanstack',
       'src/routeTree.gen.ts',
-      'server-entry.mjs',
     ],
   },
 );

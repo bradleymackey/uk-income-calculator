@@ -14,8 +14,6 @@ RUN pnpm run build
 
 FROM base AS runtime
 WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY package.json server-entry.mjs ./
+COPY --from=build /app/.output ./.output
 EXPOSE 3000
-CMD ["node", "server-entry.mjs"]
+CMD ["node", ".output/server/index.mjs"]

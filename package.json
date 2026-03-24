@@ -7,7 +7,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server-entry.mjs",
+    "start": "node .output/server/index.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@tanstack/react-router": "^1.120.0",
     "@tanstack/react-start": "^1.120.0",
+    "nitro": "3.0.260311-beta",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.8.0"
