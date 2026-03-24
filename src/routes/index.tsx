@@ -271,7 +271,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 print:bg-white dark:bg-neutral-950">
-      <header className="mx-auto w-full max-w-5xl px-4 pt-6">
+      <header className="mx-auto w-full max-w-5xl px-4 pt-6 print:hidden">
         <nav className="flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-700">
           <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
             UK Income Tax Calculator
