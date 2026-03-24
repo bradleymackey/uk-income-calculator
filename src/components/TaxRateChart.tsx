@@ -316,7 +316,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
   );
 
   return (
-    <div className="mt-3">
+    <div className="mx-auto mt-3 max-w-md">
       <p className="mb-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
         Tax rate by income
       </p>

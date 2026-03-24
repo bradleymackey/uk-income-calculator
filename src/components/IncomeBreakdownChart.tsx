@@ -236,7 +236,7 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
     return null;
 
   return (
-    <div className="mt-4">
+    <div className="mx-auto mt-4 max-w-md">
       <p className="mb-1 text-xs font-medium text-neutral-500 dark:text-neutral-400">
         Where your income goes
       </p>
