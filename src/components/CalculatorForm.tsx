@@ -107,7 +107,37 @@ export function CalculatorForm({
   onChange,
   taxRules,
 }: CalculatorFormProps) {
-  const [visible, setVisible] = useState<Set<OptionalField>>(new Set());
+  const [visible, setVisible] = useState<Set<OptionalField>>(() => {
+    const initial = new Set<OptionalField>();
+    // Show sections that have non-default values from URL state
+    if (
+      input.grossSalary ||
+      input.bonus ||
+      input.taxableBenefits ||
+      input.rsuVests
+    ) {
+      initial.add('income');
+    }
+    if (input.bonus) initial.add('bonus');
+    if (input.taxableBenefits) initial.add('benefits');
+    if (input.rsuVests) initial.add('rsus');
+    if (
+      input.pensionContribution.value ||
+      input.pensionContribution.salarySacrifice ||
+      input.employerPensionContribution.value ||
+      input.employerNiPassbackPercent ||
+      input.sippContribution
+    ) {
+      initial.add('pension');
+    }
+    if (input.employerPensionContribution.value) initial.add('employerPension');
+    if (input.sippContribution) initial.add('sipp');
+    if (input.numberOfChildren) initial.add('childBenefit');
+    if (input.undergraduatePlan !== 'none' || input.hasPostgraduateLoan) {
+      initial.add('studentLoan');
+    }
+    return initial;
+  });
 
   const show = (field: OptionalField) =>
     setVisible((prev) => new Set(prev).add(field));
