@@ -110,22 +110,18 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
   if (input.rsuTaxWithheld) params.rsuWithheld = true;
   if (input.rsuVestingPeriodsPerYear !== 4)
     params.rsuVests = input.rsuVestingPeriodsPerYear;
-  if (input.pensionContribution.value) {
-    if (input.pensionContribution.type === 'fixed') {
-      params.pensionFixed = input.pensionContribution.value;
-    } else {
-      params.pensionPct = input.pensionContribution.value;
-    }
+  if (input.pensionContribution.type === 'fixed') {
+    params.pensionFixed = input.pensionContribution.value;
+  } else if (input.pensionContribution.value) {
+    params.pensionPct = input.pensionContribution.value;
   }
   if (input.pensionContribution.salarySacrifice) params.pensionSS = true;
   if (input.pensionFixedPeriod !== 'annual')
     params.pensionFixedPer = input.pensionFixedPeriod;
-  if (input.employerPensionContribution.value) {
-    if (input.employerPensionContribution.type === 'fixed') {
-      params.empPensionFixed = input.employerPensionContribution.value;
-    } else {
-      params.empPensionPct = input.employerPensionContribution.value;
-    }
+  if (input.employerPensionContribution.type === 'fixed') {
+    params.empPensionFixed = input.employerPensionContribution.value;
+  } else if (input.employerPensionContribution.value) {
+    params.empPensionPct = input.employerPensionContribution.value;
   }
   if (input.employerNiPassbackPercent)
     params.niPassback = input.employerNiPassbackPercent;
