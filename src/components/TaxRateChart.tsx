@@ -48,6 +48,8 @@ function computeRatesAtIncome(
       pensionContribution: { type: 'fixed', value: 0, salarySacrifice: false },
       employerPensionContribution: { type: 'fixed', value: 0 },
       employerNiPassbackPercent: 0,
+      otherSalarySacrifice: 0,
+      selfEmploymentIncome: 0,
       sippContribution: 0,
     },
     rules,
