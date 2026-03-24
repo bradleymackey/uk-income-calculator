@@ -134,16 +134,49 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
       });
     }
 
-    const takeHomeExRsu = result.netAnnualPay - result.rsuVests;
-    if (takeHomeExRsu > 0) {
+    // Take home via PAYE (net pay minus RSUs which go to brokerage)
+    const takeHomePaye = result.netAnnualPay - result.rsuVests;
+    if (takeHomePaye > 0) {
       parts.push({
         name: 'Take home',
-        value: takeHomeExRsu,
+        value: takeHomePaye,
         color: COLORS.takeHome,
       });
     }
 
-    if (result.rsuVests > 0) {
+    // RSUs: show net received + withheld separately so user sees
+    // what they actually get vs what goes to tax. The income tax
+    // slice above only covers PAYE tax (we subtract the withholding).
+    if (result.rsuVests > 0 && result.rsuWithholding) {
+      // Reduce the income tax slice by the amount withheld from RSUs,
+      // since that tax was paid from shares not PAYE
+      const taxSlice = parts.find((p) => p.name === 'Income tax');
+      if (taxSlice) {
+        taxSlice.value = Math.max(
+          0,
+          taxSlice.value - result.rsuWithholding.taxWithheld,
+        );
+        taxSlice.name = 'Income tax (PAYE)';
+      }
+      const niSlice = parts.find((p) => p.name === 'National Insurance');
+      if (niSlice) {
+        niSlice.value = Math.max(
+          0,
+          niSlice.value - result.rsuWithholding.niWithheld,
+        );
+        niSlice.name = 'NI (PAYE)';
+      }
+      parts.push({
+        name: 'RSUs received',
+        value: result.rsuWithholding.netRsuValue,
+        color: COLORS.rsu,
+      });
+      parts.push({
+        name: 'RSU tax withheld',
+        value: result.rsuWithholding.totalWithheld,
+        color: '#dc2626',
+      });
+    } else if (result.rsuVests > 0) {
       parts.push({
         name: 'RSUs (brokerage)',
         value: result.rsuVests,
