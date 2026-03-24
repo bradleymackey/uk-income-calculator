@@ -32,7 +32,7 @@ interface SearchParams {
   sipp?: number;
   sippType?: 'gross' | 'net';
   children?: number;
-  slPlan?: string;
+  slPlans?: string;
   slPostgrad?: boolean;
 }
 
@@ -74,7 +74,9 @@ function searchToInput(search: SearchParams): {
       sippContribution: search.sipp ?? 0,
       sippInputType: search.sippType ?? 'gross',
       numberOfChildren: search.children ?? 0,
-      undergraduatePlan: (search.slPlan as UndergraduatePlanId) ?? 'none',
+      undergraduatePlans: search.slPlans
+        ? (search.slPlans.split(',') as Exclude<UndergraduatePlanId, 'none'>[])
+        : [],
       hasPostgraduateLoan: search.slPostgrad ?? false,
     },
   };
@@ -116,8 +118,8 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
   if (input.sippContribution) params.sipp = input.sippContribution;
   if (input.sippInputType !== 'gross') params.sippType = input.sippInputType;
   if (input.numberOfChildren) params.children = input.numberOfChildren;
-  if (input.undergraduatePlan !== 'none')
-    params.slPlan = input.undergraduatePlan;
+  if (input.undergraduatePlans.length > 0)
+    params.slPlans = input.undergraduatePlans.join(',');
   if (input.hasPostgraduateLoan) params.slPostgrad = true;
 
   return params;
@@ -158,7 +160,7 @@ export const Route = createFileRoute('/')({
       sipp: search.sipp ? Number(search.sipp) : undefined,
       sippType: search.sippType as 'gross' | 'net' | undefined,
       children: search.children ? Number(search.children) : undefined,
-      slPlan: search.slPlan as string | undefined,
+      slPlans: search.slPlans as string | undefined,
       slPostgrad:
         search.slPostgrad === true || search.slPostgrad === 'true' || undefined,
     };

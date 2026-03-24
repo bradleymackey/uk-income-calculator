@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import type { CalculatorInput } from '~/lib/calculator';
-import type {
-  TaxRules,
-  UndergraduatePlanId,
-  Country,
-  NiCategory,
-} from '~/lib/tax-rules';
+import type { TaxRules, Country, NiCategory } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
 import { Tooltip } from './Tooltip';
@@ -140,7 +135,7 @@ export function CalculatorForm({
     if (input.sippContribution) initial.add('sipp');
     if (input.selfEmploymentIncome) initial.add('selfEmployment');
     if (input.numberOfChildren) initial.add('childBenefit');
-    if (input.undergraduatePlan !== 'none' || input.hasPostgraduateLoan) {
+    if (input.undergraduatePlans.length > 0 || input.hasPostgraduateLoan) {
       initial.add('studentLoan');
     }
     return initial;
@@ -192,7 +187,7 @@ export function CalculatorForm({
       selfEmployment: { selfEmploymentIncome: 0 },
       childBenefit: { numberOfChildren: 0 },
       studentLoan: {
-        undergraduatePlan: 'none',
+        undergraduatePlans: [],
         hasPostgraduateLoan: false,
       },
     };
@@ -651,63 +646,77 @@ export function CalculatorForm({
             label="Student Loan"
             onRemove={() => hide('studentLoan')}
           >
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Undergraduate plan
-              </label>
-              <select
-                value={input.undergraduatePlan}
-                onChange={(e) =>
-                  update({
-                    undergraduatePlan: e.target.value as UndergraduatePlanId,
-                  })
-                }
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="none">None</option>
-                <option value="plan1">Plan 1</option>
-                <option value="plan2">Plan 2</option>
-                <option value="plan4">Plan 4 (Scotland)</option>
-                <option value="plan5">Plan 5</option>
-              </select>
-              {input.undergraduatePlan !== 'none' &&
-                taxRules.studentLoans[input.undergraduatePlan] && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formatPercentage(
-                      taxRules.studentLoans[input.undergraduatePlan].rate,
-                    )}{' '}
-                    on income above{' '}
-                    {formatCurrency(
-                      taxRules.studentLoans[input.undergraduatePlan].threshold,
+            <div className="space-y-2">
+              {(
+                [
+                  ['plan1', 'Plan 1'],
+                  ['plan2', 'Plan 2'],
+                  ['plan4', 'Plan 4 (Scotland)'],
+                  ['plan5', 'Plan 5'],
+                ] as const
+              ).map(([planId, label]) => {
+                const plan = taxRules.studentLoans[planId];
+                if (!plan) return null;
+                const isChecked = input.undergraduatePlans.includes(planId);
+                return (
+                  <div key={planId}>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const plans = e.target.checked
+                            ? [...input.undergraduatePlans, planId]
+                            : input.undergraduatePlans.filter(
+                                (p) => p !== planId,
+                              );
+                          update({ undergraduatePlans: plans });
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {label}
+                    </label>
+                    {isChecked && (
+                      <p className="ml-6 text-xs text-gray-500">
+                        Threshold: {formatCurrency(plan.threshold)}
+                      </p>
                     )}
-                  </p>
-                )}
+                  </div>
+                );
+              })}
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={input.hasPostgraduateLoan}
+                    onChange={(e) =>
+                      update({ hasPostgraduateLoan: e.target.checked })
+                    }
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Postgraduate Loan
+                </label>
+                {input.hasPostgraduateLoan &&
+                  taxRules.studentLoans['postgraduate'] && (
+                    <p className="ml-6 text-xs text-gray-500">
+                      {formatPercentage(
+                        taxRules.studentLoans['postgraduate'].rate,
+                      )}{' '}
+                      on income above{' '}
+                      {formatCurrency(
+                        taxRules.studentLoans['postgraduate'].threshold,
+                      )}
+                    </p>
+                  )}
+              </div>
             </div>
-            <div>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={input.hasPostgraduateLoan}
-                  onChange={(e) =>
-                    update({ hasPostgraduateLoan: e.target.checked })
-                  }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                Postgraduate Loan
-              </label>
-              {input.hasPostgraduateLoan &&
-                taxRules.studentLoans['postgraduate'] && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formatPercentage(
-                      taxRules.studentLoans['postgraduate'].rate,
-                    )}{' '}
-                    on income above{' '}
-                    {formatCurrency(
-                      taxRules.studentLoans['postgraduate'].threshold,
-                    )}
-                  </p>
-                )}
-            </div>
+            {input.undergraduatePlans.length > 0 && (
+              <p className="text-xs text-gray-500">
+                9% repayment on income above the lowest threshold
+                {input.undergraduatePlans.length > 1 &&
+                  ' (single deduction across all plans)'}
+              </p>
+            )}
           </OptionalCard>
         </section>
       )}

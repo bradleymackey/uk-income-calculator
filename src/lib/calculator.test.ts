@@ -36,7 +36,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     sippContribution: 0,
     sippInputType: 'gross',
     numberOfChildren: 0,
-    undergraduatePlan: 'none',
+    undergraduatePlans: [],
     hasPostgraduateLoan: false,
     ...overrides,
   };
@@ -489,7 +489,7 @@ describe('calculateTax', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 30000,
-        undergraduatePlan: 'plan1',
+        undergraduatePlans: ['plan1'],
       }),
       rules,
     );
@@ -522,7 +522,7 @@ describe('calculateTax', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
         hasPostgraduateLoan: true,
       }),
       rules,
@@ -533,6 +533,90 @@ describe('calculateTax', () => {
     expect(result.undergraduateLoanRepayment).toBeCloseTo(expectedUg, 2);
     expect(result.postgraduateLoanRepayment).toBeCloseTo(expectedPg, 2);
     expect(result.studentLoanRepayment).toBeCloseTo(expectedUg + expectedPg, 2);
+  });
+
+  it('multiple undergraduate plans use lowest threshold', () => {
+    // Plan 1 threshold: £26,065, Plan 2 threshold: £28,470
+    const both = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlans: ['plan1', 'plan2'],
+      }),
+      rules,
+    );
+    const plan1Only = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlans: ['plan1'],
+      }),
+      rules,
+    );
+
+    // Both plans should use Plan 1's lower threshold (£26,065)
+    // Single 9% deduction, not 9% x 2
+    expect(both.undergraduateLoanRepayment).toBeCloseTo(
+      plan1Only.undergraduateLoanRepayment,
+      2,
+    );
+    expect(both.undergraduateLoanRepayment).toBeCloseTo(
+      (40000 - 26065) * 0.09,
+      2,
+    );
+  });
+
+  it('multiple plans do not stack 9% deductions', () => {
+    const both = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlans: ['plan1', 'plan2'],
+      }),
+      rules,
+    );
+    const plan2Only = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlans: ['plan2'],
+      }),
+      rules,
+    );
+
+    // With both plans, repayment should be >= plan 2 only (lower threshold)
+    // but NOT double (not stacking)
+    expect(both.undergraduateLoanRepayment).toBeGreaterThan(
+      plan2Only.undergraduateLoanRepayment,
+    );
+    // Should be exactly 9% above Plan 1 threshold, not 18%
+    expect(both.undergraduateLoanRepayment).toBeCloseTo(
+      (40000 - 26065) * 0.09,
+      2,
+    );
+  });
+
+  it('postgraduate loan is separate from undergraduate plans', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        undergraduatePlans: ['plan1', 'plan2'],
+        hasPostgraduateLoan: true,
+      }),
+      rules,
+    );
+
+    // UG: 9% above lowest threshold (Plan 1: £26,065)
+    // PG: 6% above £21,000 — separate calculation
+    expect(result.undergraduateLoanRepayment).toBeCloseTo(
+      (40000 - 26065) * 0.09,
+      2,
+    );
+    expect(result.postgraduateLoanRepayment).toBeCloseTo(
+      (40000 - 21000) * 0.06,
+      2,
+    );
+    // Total = UG + PG (not combined threshold)
+    expect(result.studentLoanRepayment).toBeCloseTo(
+      (40000 - 26065) * 0.09 + (40000 - 21000) * 0.06,
+      2,
+    );
   });
 
   it('calculates correct monthly pay', () => {
@@ -615,11 +699,11 @@ describe('calculateTax', () => {
 
   it('Plan 4 threshold is £32,745', () => {
     const below = calculateTax(
-      makeInput({ grossSalary: 32000, undergraduatePlan: 'plan4' }),
+      makeInput({ grossSalary: 32000, undergraduatePlans: ['plan4'] }),
       rules,
     );
     const above = calculateTax(
-      makeInput({ grossSalary: 35000, undergraduatePlan: 'plan4' }),
+      makeInput({ grossSalary: 35000, undergraduatePlans: ['plan4'] }),
       rules,
     );
 
@@ -629,7 +713,7 @@ describe('calculateTax', () => {
 
   it('Plan 5 threshold is £25,000', () => {
     const result = calculateTax(
-      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      makeInput({ grossSalary: 30000, undergraduatePlans: ['plan5'] }),
       rules,
     );
     expect(result.studentLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
@@ -639,7 +723,7 @@ describe('calculateTax', () => {
 
   it('deductions + net pay = gross income', () => {
     const result = calculateTax(
-      makeInput({ grossSalary: 75000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 75000, undergraduatePlans: ['plan2'] }),
       rules,
     );
     expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
@@ -684,7 +768,7 @@ describe('calculateTax', () => {
           salarySacrifice: true,
         },
         sippContribution: 5000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
         hasPostgraduateLoan: true,
       }),
       rules,
@@ -770,7 +854,7 @@ describe('calculateTax', () => {
 
   it('marginal rate includes student loan', () => {
     const result = calculateTax(
-      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 30000, undergraduatePlans: ['plan2'] }),
       rules,
     );
     // 20% tax + 8% NI + 9% Plan 2
@@ -781,7 +865,7 @@ describe('calculateTax', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
         hasPostgraduateLoan: true,
       }),
       rules,
@@ -805,7 +889,7 @@ describe('2026/27 tax year', () => {
 
   it('Plan 1 threshold increased to £26,900', () => {
     const r = calculateTax(
-      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan1' }),
+      makeInput({ grossSalary: 30000, undergraduatePlans: ['plan1'] }),
       rules2627,
     );
     expect(r.studentLoanRepayment).toBeCloseTo((30000 - 26900) * 0.09, 2);
@@ -814,11 +898,11 @@ describe('2026/27 tax year', () => {
   it('Plan 2 threshold increased to £29,385', () => {
     // £29,000 is below 2026/27 threshold but above 2025/26 threshold
     const r2627 = calculateTax(
-      makeInput({ grossSalary: 29000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 29000, undergraduatePlans: ['plan2'] }),
       rules2627,
     );
     const r2526 = calculateTax(
-      makeInput({ grossSalary: 29000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 29000, undergraduatePlans: ['plan2'] }),
       rules,
     );
     // No repayment in 2026/27 (below £29,385), but repayment in 2025/26 (above £28,470)
@@ -828,7 +912,7 @@ describe('2026/27 tax year', () => {
 
   it('Plan 4 threshold increased to £33,795', () => {
     const r = calculateTax(
-      makeInput({ grossSalary: 35000, undergraduatePlan: 'plan4' }),
+      makeInput({ grossSalary: 35000, undergraduatePlans: ['plan4'] }),
       rules2627,
     );
     expect(r.studentLoanRepayment).toBeCloseTo((35000 - 33795) * 0.09, 2);
@@ -838,7 +922,7 @@ describe('2026/27 tax year', () => {
     const r = calculateTax(
       makeInput({
         grossSalary: 30000,
-        undergraduatePlan: 'plan5',
+        undergraduatePlans: ['plan5'],
         hasPostgraduateLoan: true,
       }),
       rules2627,
@@ -875,7 +959,7 @@ describe('2020/21 tax year', () => {
 
   it('Plan 5 does not exist', () => {
     const r = calculateTax(
-      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      makeInput({ grossSalary: 30000, undergraduatePlans: ['plan5'] }),
       rules2021,
     );
     expect(r.studentLoanRepayment).toBe(0);
@@ -926,7 +1010,7 @@ describe('2023/24 tax year', () => {
 
   it('Plan 5 exists from 2023-24', () => {
     const r = calculateTax(
-      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      makeInput({ grossSalary: 30000, undergraduatePlans: ['plan5'] }),
       rules2324,
     );
     expect(r.studentLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
@@ -1076,7 +1160,7 @@ describe('Scottish income tax', () => {
       makeInput({
         country: 'scotland',
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1084,7 +1168,7 @@ describe('Scottish income tax', () => {
       makeInput({
         country: 'england',
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1193,14 +1277,14 @@ describe('student loan with salary sacrifice', () => {
     const withoutSS = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
     const withSS = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
         pensionContribution: {
           type: 'percentage',
           value: 5,
@@ -1223,7 +1307,7 @@ describe('student loan with salary sacrifice', () => {
     const withSipp = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
         sippContribution: 5000,
       }),
       rules,
@@ -1231,7 +1315,7 @@ describe('student loan with salary sacrifice', () => {
     const withoutSipp = calculateTax(
       makeInput({
         grossSalary: 40000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1363,14 +1447,14 @@ describe('BIK tax treatment', () => {
       makeInput({
         grossSalary: 35000,
         taxableBenefits: 5000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
     const withoutBik = calculateTax(
       makeInput({
         grossSalary: 35000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1425,7 +1509,7 @@ describe('net pay integrity', () => {
           salarySacrifice: true,
         },
         sippContribution: 10000,
-        undergraduatePlan: 'plan1',
+        undergraduatePlans: ['plan1'],
         hasPostgraduateLoan: true,
       }),
       rules,
@@ -1788,7 +1872,7 @@ describe('NI category', () => {
       makeInput({
         grossSalary: 40000,
         niCategory: 'A',
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1796,7 +1880,7 @@ describe('NI category', () => {
       makeInput({
         grossSalary: 40000,
         niCategory: 'C',
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
@@ -1864,12 +1948,12 @@ describe('other salary sacrifice', () => {
       makeInput({
         grossSalary: 40000,
         otherSalarySacrifice: 5000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
     const withoutSS = calculateTax(
-      makeInput({ grossSalary: 40000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 40000, undergraduatePlans: ['plan2'] }),
       rules,
     );
 
@@ -2003,12 +2087,12 @@ describe('self-employment income', () => {
       makeInput({
         grossSalary: 20000,
         selfEmploymentIncome: 20000,
-        undergraduatePlan: 'plan2',
+        undergraduatePlans: ['plan2'],
       }),
       rules,
     );
     const withoutSelfEmp = calculateTax(
-      makeInput({ grossSalary: 20000, undergraduatePlan: 'plan2' }),
+      makeInput({ grossSalary: 20000, undergraduatePlans: ['plan2'] }),
       rules,
     );
     // £20k employment alone is below Plan 2 threshold (£28,470)

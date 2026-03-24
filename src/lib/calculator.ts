@@ -31,7 +31,7 @@ export interface CalculatorInput {
   sippInputType: 'gross' | 'net';
   selfEmploymentIncome: number;
   numberOfChildren: number;
-  undergraduatePlan: UndergraduatePlanId;
+  undergraduatePlans: Exclude<UndergraduatePlanId, 'none'>[];
   hasPostgraduateLoan: boolean;
 }
 
@@ -269,12 +269,13 @@ function totalDeductionsAtSalary(
 
   const studentLoanBase = niable + input.selfEmploymentIncome;
   let studentLoan = 0;
-  if (input.undergraduatePlan !== 'none') {
-    studentLoan += calculateStudentLoanForPlan(
-      studentLoanBase,
-      input.undergraduatePlan,
-      rules,
+  if (input.undergraduatePlans.length > 0) {
+    const lowestThreshold = Math.min(
+      ...input.undergraduatePlans.map(
+        (p) => rules.studentLoans[p]?.threshold ?? Infinity,
+      ),
     );
+    studentLoan += Math.max(0, (studentLoanBase - lowestThreshold) * 0.09);
   }
   if (input.hasPostgraduateLoan) {
     studentLoan += calculateStudentLoanForPlan(
@@ -440,15 +441,21 @@ export function calculateTax(
   const class4Ni = class4NiBands.reduce((sum, b) => sum + b.tax, 0);
 
   // 9. Student loans (based on total income: employment + self-employment)
+  // Multiple undergraduate plans use a single 9% deduction on the lowest threshold.
+  // Postgraduate loan is always separate at 6%.
   const studentLoanIncome = niableIncome + input.selfEmploymentIncome;
-  const undergraduateLoanRepayment =
-    input.undergraduatePlan !== 'none'
-      ? calculateStudentLoanForPlan(
-          studentLoanIncome,
-          input.undergraduatePlan,
-          rules,
-        )
-      : 0;
+  let undergraduateLoanRepayment = 0;
+  if (input.undergraduatePlans.length > 0) {
+    const lowestThreshold = Math.min(
+      ...input.undergraduatePlans.map(
+        (p) => rules.studentLoans[p]?.threshold ?? Infinity,
+      ),
+    );
+    undergraduateLoanRepayment = Math.max(
+      0,
+      (studentLoanIncome - lowestThreshold) * 0.09,
+    );
+  }
   const postgraduateLoanRepayment = input.hasPostgraduateLoan
     ? calculateStudentLoanForPlan(studentLoanIncome, 'postgraduate', rules)
     : 0;
@@ -553,14 +560,17 @@ export function calculateTax(
             payeNiable,
             rules.nationalInsurance.employeeClass1.bands,
           ).reduce((sum, b) => sum + b.tax, 0);
+    let payeUgLoan = 0;
+    if (input.undergraduatePlans.length > 0) {
+      const lowestThreshold = Math.min(
+        ...input.undergraduatePlans.map(
+          (p) => rules.studentLoans[p]?.threshold ?? Infinity,
+        ),
+      );
+      payeUgLoan = Math.max(0, (payeNiable - lowestThreshold) * 0.09);
+    }
     const payeStudentLoan =
-      (input.undergraduatePlan !== 'none'
-        ? calculateStudentLoanForPlan(
-            payeNiable,
-            input.undergraduatePlan,
-            rules,
-          )
-        : 0) +
+      payeUgLoan +
       (input.hasPostgraduateLoan
         ? calculateStudentLoanForPlan(payeNiable, 'postgraduate', rules)
         : 0);

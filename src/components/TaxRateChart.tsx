@@ -185,13 +185,26 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       );
     }
 
-    // Student loan thresholds
-    if (input.undergraduatePlan !== 'none') {
-      const plan = taxRules.studentLoans[input.undergraduatePlan];
+    // Student loan thresholds — multiple UG plans use lowest threshold
+    if (input.undergraduatePlans.length > 0) {
+      const lowestPlan = input.undergraduatePlans.reduce((lowest, p) => {
+        const plan = taxRules.studentLoans[p];
+        const lowestPlanData = taxRules.studentLoans[lowest];
+        return plan &&
+          lowestPlanData &&
+          plan.threshold < lowestPlanData.threshold
+          ? p
+          : lowest;
+      }, input.undergraduatePlans[0]);
+      const plan = taxRules.studentLoans[lowestPlan];
       if (plan) {
+        const planNames = input.undergraduatePlans
+          .map((p) => taxRules.studentLoans[p]?.label)
+          .filter(Boolean)
+          .join(' + ');
         boundaries.push({
           value: plan.threshold,
-          label: `${plan.label} threshold — ${(plan.rate * 100).toFixed(0)}% repayment starts`,
+          label: `${planNames} — 9% repayment starts`,
         });
       }
     }
