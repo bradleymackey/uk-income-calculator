@@ -183,6 +183,59 @@ export function calculateSippRelief(
   };
 }
 
+function totalDeductionsAtSalary(
+  salary: number,
+  input: CalculatorInput,
+  rules: TaxRules,
+): number {
+  const pension =
+    input.pensionContribution.type === 'percentage'
+      ? (salary * input.pensionContribution.value) / 100
+      : input.pensionContribution.value;
+  const ssDeduction = input.pensionContribution.salarySacrifice ? pension : 0;
+  const sipp = input.sippContribution;
+
+  const gross = salary + input.bonus + input.taxableBenefits + input.rsuVests;
+  const niable = salary + input.bonus + input.rsuVests - ssDeduction;
+  const adjusted = gross - ssDeduction - sipp;
+
+  const pa = calculatePersonalAllowance(adjusted, rules);
+  const taxable = Math.max(0, adjusted - pa);
+  const tax = calculateBandedTax(taxable, rules.incomeTax.bands).reduce(
+    (s, b) => s + b.tax,
+    0,
+  );
+  const ni = calculateBandedTax(
+    niable,
+    rules.nationalInsurance.employeeClass1.bands,
+  ).reduce((s, b) => s + b.tax, 0);
+
+  let studentLoan = 0;
+  if (input.undergraduatePlan !== 'none') {
+    studentLoan += calculateStudentLoanForPlan(
+      niable,
+      input.undergraduatePlan,
+      rules,
+    );
+  }
+  if (input.hasPostgraduateLoan) {
+    studentLoan += calculateStudentLoanForPlan(niable, 'postgraduate', rules);
+  }
+
+  return tax + ni + studentLoan;
+}
+
+function computeMarginalRate(
+  input: CalculatorInput,
+  currentSalary: number,
+  rules: TaxRules,
+): number {
+  if (currentSalary <= 0) return 0;
+  const atCurrent = totalDeductionsAtSalary(currentSalary, input, rules);
+  const atNext = totalDeductionsAtSalary(currentSalary + 1, input, rules);
+  return atNext - atCurrent;
+}
+
 export function calculateTax(
   input: CalculatorInput,
   rules: TaxRules,
@@ -401,29 +454,16 @@ export function calculateTax(
           : (payeMonthlyAdjusted ?? payeMonthlyPay)) + rsuPerVest.netPerVest
       : null;
 
-  // Effective and marginal tax rates
+  // Effective tax rate
   const effectiveRate =
     totalGrossIncome > 0
       ? (incomeTax + nationalInsurance) / totalGrossIncome
       : 0;
 
-  // Marginal rate: the rate on the next £1 of income
-  const marginalTaxRate =
-    taxableIncome > 125140
-      ? 0.45
-      : taxableIncome > 37700
-        ? 0.4
-        : taxableIncome > 0
-          ? 0.2
-          : 0;
-  // PA taper adds effective 60% rate between £100k-£125,140
-  const adjustedForTaper =
-    adjustedNetIncome > 100000 && adjustedNetIncome < 125140;
-  const marginalNiRate =
-    niableIncome > 50270 ? 0.02 : niableIncome > 12570 ? 0.08 : 0;
-  const marginalRate =
-    (adjustedForTaper ? marginalTaxRate + 0.2 : marginalTaxRate) +
-    marginalNiRate;
+  // Marginal rate: compute empirically by comparing tax at current income
+  // vs income + £1. This automatically captures all factors: tax bands,
+  // PA taper, NI rates, student loan thresholds, salary sacrifice, etc.
+  const marginalRate = computeMarginalRate(input, grossSalary, rules);
 
   return {
     grossSalary,
