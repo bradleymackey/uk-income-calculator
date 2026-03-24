@@ -309,8 +309,26 @@ function HomePage() {
         </div>
       </div>
       <footer className="mx-auto max-w-5xl px-4 pb-6 pt-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
-        All calculations are performed locally in your browser. Nothing is
-        stored or sent anywhere unless you share your URL.
+        <p>
+          All calculations are performed locally in your browser. Nothing is
+          stored or sent anywhere unless you share your URL.
+        </p>
+        <p className="mt-1">
+          By{' '}
+          <a
+            href="https://mcky.dev"
+            className="underline hover:text-neutral-600 dark:hover:text-neutral-300"
+          >
+            mcky.dev
+          </a>
+          {' · '}
+          <a
+            href="https://github.com/bradleymackey/uk-income-calculator"
+            className="underline hover:text-neutral-600 dark:hover:text-neutral-300"
+          >
+            Open Source
+          </a>
+        </p>
       </footer>
     </div>
   );
