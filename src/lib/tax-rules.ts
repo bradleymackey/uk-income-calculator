@@ -34,7 +34,7 @@ export type UndergraduatePlanId =
 
 export type Country = 'england' | 'scotland';
 
-export type NiCategory = 'A' | 'C';
+export type NiCategory = 'A' | 'C' | 'X';
 
 export interface ChildBenefitRules {
   weeklyRateFirstChild: number;

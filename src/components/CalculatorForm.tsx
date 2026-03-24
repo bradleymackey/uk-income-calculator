@@ -276,10 +276,16 @@ export function CalculatorForm({
           >
             <option value="A">A — Standard</option>
             <option value="C">C — Over state pension age</option>
+            <option value="X">X — NI exempt</option>
           </select>
           {input.niCategory === 'C' && (
             <p className="mt-1 text-xs text-gray-500">
               No employee National Insurance contributions
+            </p>
+          )}
+          {input.niCategory === 'X' && (
+            <p className="mt-1 text-xs text-gray-500">
+              No employee or employer National Insurance contributions
             </p>
           )}
         </div>

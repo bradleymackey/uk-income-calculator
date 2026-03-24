@@ -1820,6 +1820,26 @@ describe('NI category', () => {
     expect(result.employerNiSaving).toBeGreaterThan(0);
     expect(result.employerNiPassback).toBeGreaterThan(0);
   });
+
+  it('category X has zero employee and employer NI', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        niCategory: 'X',
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        employerNiPassbackPercent: 100,
+      }),
+      rules,
+    );
+    expect(result.nationalInsurance).toBe(0);
+    expect(result.niBands).toHaveLength(0);
+    expect(result.employerNiSaving).toBe(0);
+    expect(result.employerNiPassback).toBe(0);
+  });
 });
 
 // --- Other salary sacrifice ---

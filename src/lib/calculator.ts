@@ -243,7 +243,7 @@ function totalDeductionsAtSalary(
   );
   // Category C (over state pension age): no employee NI
   const ni =
-    input.niCategory === 'C'
+    input.niCategory !== 'A'
       ? 0
       : calculateBandedTax(
           niable,
@@ -333,7 +333,7 @@ export function calculateTax(
             ? Math.min(pensionContribution, grossSalary)
             : 0),
       );
-    if (totalSS > 0) {
+    if (totalSS > 0 && input.niCategory !== 'X') {
       const originalNiable = Math.max(
         0,
         grossSalary - employerNi.secondaryThreshold,
@@ -394,7 +394,7 @@ export function calculateTax(
 
   // 8. National Insurance (Category C = over state pension age, no employee NI)
   const niBands =
-    input.niCategory === 'C'
+    input.niCategory !== 'A'
       ? []
       : calculateBandedTax(
           niableIncome,
@@ -509,7 +509,7 @@ export function calculateTax(
       0,
     );
     const payeNI =
-      input.niCategory === 'C'
+      input.niCategory !== 'A'
         ? 0
         : calculateBandedTax(
             payeNiable,
