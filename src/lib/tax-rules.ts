@@ -67,6 +67,9 @@ export interface TaxRules {
       upperEarningsLimit: number;
       bands: TaxBand[];
     };
+    class4: {
+      bands: TaxBand[];
+    };
   };
   childBenefit: ChildBenefitRules;
   studentLoans: Record<string, StudentLoanPlan>;

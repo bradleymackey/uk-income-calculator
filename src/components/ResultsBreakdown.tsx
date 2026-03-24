@@ -236,6 +236,12 @@ export function ResultsBreakdown({
           {result.rsuVests > 0 && (
             <Row label="RSU vests" value={formatCurrency(result.rsuVests)} />
           )}
+          {input.selfEmploymentIncome > 0 && (
+            <Row
+              label="Self-employment profit"
+              value={formatCurrency(input.selfEmploymentIncome)}
+            />
+          )}
         </div>
       </section>
 
@@ -419,6 +425,24 @@ export function ResultsBreakdown({
           />
         </div>
       </section>
+
+      {/* Class 4 NI */}
+      {result.class4Ni > 0 && (
+        <section>
+          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+            Class 4 National Insurance
+          </h3>
+          <BandTable bands={result.class4NiBands} />
+          <div className="mt-1 text-sm">
+            <Row
+              label="Total Class 4 NI"
+              value={`-${formatCurrency(result.class4Ni)}`}
+              bold
+              highlight="red"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Child Benefit */}
       {result.childBenefit && (

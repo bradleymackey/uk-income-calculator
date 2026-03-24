@@ -55,7 +55,11 @@ function computeRatesAtIncome(
 
   const hicbcCharge = r.childBenefit?.hicbcCharge ?? 0;
   const totalTaxNiSl =
-    r.incomeTax + r.nationalInsurance + r.studentLoanRepayment + hicbcCharge;
+    r.incomeTax +
+    r.nationalInsurance +
+    r.class4Ni +
+    r.studentLoanRepayment +
+    hicbcCharge;
   const effective =
     r.totalGrossIncome > 0 ? (totalTaxNiSl / r.totalGrossIncome) * 100 : 0;
 

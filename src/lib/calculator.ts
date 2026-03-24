@@ -29,6 +29,7 @@ export interface CalculatorInput {
   otherSalarySacrifice: number;
   sippContribution: number;
   sippInputType: 'gross' | 'net';
+  selfEmploymentIncome: number;
   numberOfChildren: number;
   undergraduatePlan: UndergraduatePlanId;
   hasPostgraduateLoan: boolean;
@@ -76,6 +77,9 @@ export interface CalculationResult {
 
   niBands: BandBreakdown[];
   nationalInsurance: number;
+
+  class4NiBands: BandBreakdown[];
+  class4Ni: number;
 
   undergraduateLoanRepayment: number;
   postgraduateLoanRepayment: number;
@@ -230,7 +234,12 @@ function totalDeductionsAtSalary(
       ? input.sippContribution / 0.8
       : input.sippContribution;
 
-  const gross = salary + input.bonus + input.taxableBenefits + input.rsuVests;
+  const gross =
+    salary +
+    input.bonus +
+    input.taxableBenefits +
+    input.rsuVests +
+    input.selfEmploymentIncome;
   const niable = salary + input.bonus + input.rsuVests - ssDeduction;
   const adjusted = gross - ssDeduction - sipp;
 
@@ -250,16 +259,29 @@ function totalDeductionsAtSalary(
           rules.nationalInsurance.employeeClass1.bands,
         ).reduce((s, b) => s + b.tax, 0);
 
+  const class4 =
+    input.selfEmploymentIncome > 0
+      ? calculateBandedTax(
+          input.selfEmploymentIncome,
+          rules.nationalInsurance.class4.bands,
+        ).reduce((s, b) => s + b.tax, 0)
+      : 0;
+
+  const studentLoanBase = niable + input.selfEmploymentIncome;
   let studentLoan = 0;
   if (input.undergraduatePlan !== 'none') {
     studentLoan += calculateStudentLoanForPlan(
-      niable,
+      studentLoanBase,
       input.undergraduatePlan,
       rules,
     );
   }
   if (input.hasPostgraduateLoan) {
-    studentLoan += calculateStudentLoanForPlan(niable, 'postgraduate', rules);
+    studentLoan += calculateStudentLoanForPlan(
+      studentLoanBase,
+      'postgraduate',
+      rules,
+    );
   }
 
   let hicbc = 0;
@@ -278,7 +300,7 @@ function totalDeductionsAtSalary(
     }
   }
 
-  return tax + ni + studentLoan + hicbc;
+  return tax + ni + class4 + studentLoan + hicbc;
 }
 
 function computeMarginalRate(
@@ -355,8 +377,13 @@ export function calculateTax(
       ? input.sippContribution / 0.8
       : input.sippContribution;
 
-  // 2. Total gross income
-  const totalGrossIncome = grossSalary + bonus + taxableBenefits + rsuVests;
+  // 2. Total gross income (includes self-employment profits)
+  const totalGrossIncome =
+    grossSalary +
+    bonus +
+    taxableBenefits +
+    rsuVests +
+    input.selfEmploymentIncome;
 
   // 3. NI-able income: salary + bonus + RSUs - salary sacrifice
   // BIK is NOT subject to employee NI
@@ -402,8 +429,18 @@ export function calculateTax(
         );
   const nationalInsurance = niBands.reduce((sum, b) => sum + b.tax, 0);
 
-  // 9. Student loans
-  const studentLoanIncome = niableIncome;
+  // 8b. Class 4 NI on self-employment profits
+  const class4NiBands =
+    input.selfEmploymentIncome > 0
+      ? calculateBandedTax(
+          input.selfEmploymentIncome,
+          rules.nationalInsurance.class4.bands,
+        )
+      : [];
+  const class4Ni = class4NiBands.reduce((sum, b) => sum + b.tax, 0);
+
+  // 9. Student loans (based on total income: employment + self-employment)
+  const studentLoanIncome = niableIncome + input.selfEmploymentIncome;
   const undergraduateLoanRepayment =
     input.undergraduatePlan !== 'none'
       ? calculateStudentLoanForPlan(
@@ -478,6 +515,7 @@ export function calculateTax(
   const totalDeductions =
     incomeTax +
     nationalInsurance +
+    class4Ni +
     studentLoanRepayment +
     pensionContribution +
     otherSacrifice +
@@ -596,6 +634,8 @@ export function calculateTax(
     incomeTax,
     niBands,
     nationalInsurance,
+    class4NiBands,
+    class4Ni,
     undergraduateLoanRepayment,
     postgraduateLoanRepayment,
     studentLoanRepayment,

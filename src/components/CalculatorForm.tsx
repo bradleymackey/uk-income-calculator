@@ -19,6 +19,7 @@ type OptionalField =
   | 'pension'
   | 'employerPension'
   | 'sipp'
+  | 'selfEmployment'
   | 'childBenefit'
   | 'studentLoan';
 
@@ -31,6 +32,7 @@ const FIELD_LABELS: Record<OptionalField, string> = {
   pension: 'Pension',
   employerPension: 'Employer pension',
   sipp: 'SIPP',
+  selfEmployment: 'Self-Employment',
   childBenefit: 'Child Benefit',
   studentLoan: 'Student Loan',
 };
@@ -136,6 +138,7 @@ export function CalculatorForm({
     }
     if (input.employerPensionContribution.value) initial.add('employerPension');
     if (input.sippContribution) initial.add('sipp');
+    if (input.selfEmploymentIncome) initial.add('selfEmployment');
     if (input.numberOfChildren) initial.add('childBenefit');
     if (input.undergraduatePlan !== 'none' || input.hasPostgraduateLoan) {
       initial.add('studentLoan');
@@ -186,6 +189,7 @@ export function CalculatorForm({
         employerPensionContribution: { type: 'percentage', value: 0 },
       },
       sipp: { sippContribution: 0, sippInputType: 'gross' as const },
+      selfEmployment: { selfEmploymentIncome: 0 },
       childBenefit: { numberOfChildren: 0 },
       studentLoan: {
         undergraduatePlan: 'none',
@@ -583,6 +587,25 @@ export function CalculatorForm({
                 </OptionalCard>
               )}
             </div>
+          </OptionalCard>
+        </section>
+      )}
+
+      {isVisible('selfEmployment') && (
+        <section className="py-5 first:pt-0 last:pb-0">
+          <OptionalCard
+            label="Self-Employment"
+            onRemove={() => hide('selfEmployment')}
+          >
+            <InputField
+              label="Annual self-employment profit"
+              value={input.selfEmploymentIncome || ''}
+              onChange={(v) =>
+                update({ selfEmploymentIncome: parseFloat(v) || 0 })
+              }
+              prefix="£"
+              tooltip="Net profit from self-employment after allowable expenses. Taxed as income and subject to Class 4 NI (not Class 1)."
+            />
           </OptionalCard>
         </section>
       )}

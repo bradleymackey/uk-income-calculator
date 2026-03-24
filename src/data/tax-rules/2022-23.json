@@ -32,18 +32,14 @@
       "primaryThreshold": 12570,
       "upperEarningsLimit": 50270,
       "bands": [
-        {
-          "name": "Main rate",
-          "rate": 0.1325,
-          "from": 12570,
-          "to": 50270
-        },
-        {
-          "name": "Upper rate",
-          "rate": 0.0325,
-          "from": 50270,
-          "to": null
-        }
+        { "name": "Main rate", "rate": 0.1325, "from": 12570, "to": 50270 },
+        { "name": "Upper rate", "rate": 0.0325, "from": 50270, "to": null }
+      ]
+    },
+    "class4": {
+      "bands": [
+        { "name": "Main rate", "rate": 0.0973, "from": 11909, "to": 50270 },
+        { "name": "Upper rate", "rate": 0.0273, "from": 50270, "to": null }
       ]
     }
   },

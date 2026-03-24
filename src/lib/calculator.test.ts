@@ -32,6 +32,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     },
     employerNiPassbackPercent: 0,
     otherSalarySacrifice: 0,
+    selfEmploymentIncome: 0,
     sippContribution: 0,
     sippInputType: 'gross',
     numberOfChildren: 0,
@@ -1940,5 +1941,90 @@ describe('other salary sacrifice', () => {
     );
 
     expect(withSS.employerNiSaving).toBeGreaterThan(withoutSS.employerNiSaving);
+  });
+});
+
+// --- Self-employment income ---
+
+describe('self-employment income', () => {
+  it('adds to total gross income for income tax', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 30000, selfEmploymentIncome: 20000 }),
+      rules,
+    );
+    expect(result.totalGrossIncome).toBe(50000);
+    // Income tax on combined £50k
+    expect(result.incomeTax).toBeCloseTo(7486, 2);
+  });
+
+  it('calculates Class 4 NI on self-employment profit', () => {
+    const result = calculateTax(
+      makeInput({ selfEmploymentIncome: 40000 }),
+      rules,
+    );
+    // Class 4: (40000-12570)*0.06 = 27430*0.06 = 1645.80
+    expect(result.class4Ni).toBeCloseTo(1645.8, 2);
+    expect(result.class4NiBands).toHaveLength(1);
+  });
+
+  it('Class 4 NI has upper rate above UPL', () => {
+    const result = calculateTax(
+      makeInput({ selfEmploymentIncome: 60000 }),
+      rules,
+    );
+    // Main: (50270-12570)*0.06 = 37700*0.06 = 2262
+    // Upper: (60000-50270)*0.02 = 9730*0.02 = 194.60
+    expect(result.class4Ni).toBeCloseTo(2456.6, 2);
+    expect(result.class4NiBands).toHaveLength(2);
+  });
+
+  it('does not pay Class 1 NI on self-employment income', () => {
+    const selfEmpOnly = calculateTax(
+      makeInput({ selfEmploymentIncome: 50000 }),
+      rules,
+    );
+    expect(selfEmpOnly.nationalInsurance).toBe(0);
+    expect(selfEmpOnly.niBands).toHaveLength(0);
+    expect(selfEmpOnly.class4Ni).toBeGreaterThan(0);
+  });
+
+  it('affects PA taper (adjustedNetIncome)', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 80000, selfEmploymentIncome: 30000 }),
+      rules,
+    );
+    // Adjusted = 80000 + 30000 = 110000, PA tapered
+    expect(result.adjustedNetIncome).toBe(110000);
+    expect(result.personalAllowance).toBe(7570);
+  });
+
+  it('included in student loan calculation', () => {
+    const withSelfEmp = calculateTax(
+      makeInput({
+        grossSalary: 20000,
+        selfEmploymentIncome: 20000,
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const withoutSelfEmp = calculateTax(
+      makeInput({ grossSalary: 20000, undergraduatePlan: 'plan2' }),
+      rules,
+    );
+    // £20k employment alone is below Plan 2 threshold (£28,470)
+    expect(withoutSelfEmp.studentLoanRepayment).toBe(0);
+    // £20k + £20k = £40k, above threshold
+    expect(withSelfEmp.studentLoanRepayment).toBeGreaterThan(0);
+  });
+
+  it('deductions + net = gross', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 40000, selfEmploymentIncome: 20000 }),
+      rules,
+    );
+    expect(result.totalDeductions + result.netAnnualPay).toBeCloseTo(
+      result.totalGrossIncome,
+      2,
+    );
   });
 });
