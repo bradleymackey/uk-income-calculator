@@ -100,10 +100,10 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const totalGross = result.totalGrossIncome;
+  const adjustedIncome = result.adjustedNetIncome;
 
   const data = useMemo(() => {
-    const maxIncome = totalGross;
+    const maxIncome = adjustedIncome;
     if (maxIncome <= 0) return [];
 
     // Tax boundaries with descriptions
@@ -237,7 +237,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
 
     // Build XAxis ticks: boundaries + a selection of round numbers
     return points;
-  }, [totalGross, input, taxRules]);
+  }, [adjustedIncome, input, taxRules]);
 
   const ticks = useMemo(() => {
     if (data.length === 0) return [];
@@ -252,9 +252,9 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     );
   }, [data]);
 
-  if (!mounted || totalGross <= 0 || data.length === 0) return null;
+  if (!mounted || adjustedIncome <= 0 || data.length === 0) return null;
 
-  const userPoint = data.find((d) => d.income === Math.round(totalGross));
+  const userPoint = data.find((d) => d.income === Math.round(adjustedIncome));
   const userMarginal = userPoint?.marginal ?? 0;
   const userEffective = userPoint?.effective ?? 0;
 
@@ -288,7 +288,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
               tickFormatter={formatIncome}
               tick={{ fontSize: 9, fill: '#6b7280' }}
               stroke="#d1d5db"
-              domain={[0, Math.round(totalGross)]}
+              domain={[0, Math.round(adjustedIncome)]}
               ticks={ticks}
             />
             <YAxis
@@ -317,13 +317,13 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
               isAnimationActive={false}
             />
             <ReferenceLine
-              x={Math.round(totalGross)}
+              x={Math.round(adjustedIncome)}
               stroke="#6b7280"
               strokeDasharray="4 4"
               strokeWidth={1}
             />
             <ReferenceDot
-              x={Math.round(totalGross)}
+              x={Math.round(adjustedIncome)}
               y={userMarginal}
               r={4}
               fill="#ef4444"
@@ -331,7 +331,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
               strokeWidth={2}
             />
             <ReferenceDot
-              x={Math.round(totalGross)}
+              x={Math.round(adjustedIncome)}
               y={userEffective}
               r={4}
               fill="#3b82f6"
