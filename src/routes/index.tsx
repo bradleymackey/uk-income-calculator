@@ -269,7 +269,7 @@ function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-neutral-50 print:bg-white dark:bg-neutral-950">
       <header className="mx-auto w-full max-w-5xl px-4 pt-6">
         <nav className="flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-700">
           <span className="text-lg font-bold tracking-tight">
@@ -292,15 +292,15 @@ function HomePage() {
         </nav>
       </header>
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
+        <div className="grid grid-cols-1 gap-8 print:block print:space-y-6 lg:grid-cols-2">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 print:rounded-none print:p-0 print:shadow-none print:ring-0 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <CalculatorForm
               input={input}
               onChange={handleInputChange}
               taxRules={rules}
             />
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 print:rounded-none print:p-0 print:shadow-none print:ring-0 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Take-Home Pay Breakdown
             </h2>
@@ -308,7 +308,7 @@ function HomePage() {
           </div>
         </div>
       </div>
-      <footer className="mx-auto max-w-5xl px-4 pb-6 pt-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+      <footer className="mx-auto max-w-5xl px-4 pb-6 pt-2 text-center text-xs text-neutral-400 print:hidden dark:text-neutral-500">
         <p>
           All calculations are performed locally in your browser. Nothing is
           stored or sent anywhere unless you share your URL.
