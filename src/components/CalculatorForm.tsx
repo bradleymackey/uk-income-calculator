@@ -266,6 +266,13 @@ export function CalculatorForm({
               }{' '}
               Scotland
             </option>
+            <option value="wales">
+              {
+                '\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F'
+              }{' '}
+              Wales
+            </option>
+            <option value="northern-ireland">{'🇬🇧'} Northern Ireland</option>
           </select>
           {input.country === 'scotland' && (
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">

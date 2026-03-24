@@ -32,7 +32,7 @@ export type UndergraduatePlanId =
   | 'plan4'
   | 'plan5';
 
-export type Country = 'england' | 'scotland';
+export type Country = 'england' | 'scotland' | 'wales' | 'northern-ireland';
 
 export type NiCategory = 'A' | 'C' | 'X';
 
