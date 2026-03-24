@@ -8,11 +8,13 @@ import {
   getAvailableTaxYears,
   DEFAULT_TAX_YEAR,
 } from '~/lib/tax-rules';
-import type { UndergraduatePlanId, Country } from '~/lib/tax-rules';
+import type { UndergraduatePlanId, Country, NiCategory } from '~/lib/tax-rules';
 
 interface SearchParams {
   year?: string;
   country?: Country;
+  niCat?: NiCategory;
+  blind?: boolean;
   salary?: number;
   bonus?: number;
   bik?: number;
@@ -43,6 +45,8 @@ function searchToInput(search: SearchParams): {
     taxYear: search.year ?? DEFAULT_TAX_YEAR,
     input: {
       country: search.country ?? 'england',
+      niCategory: search.niCat ?? 'A',
+      isBlind: search.blind ?? false,
       grossSalary: search.salary ?? 0,
       bonus: search.bonus ?? 0,
       taxableBenefits: search.bik ?? 0,
@@ -77,6 +81,8 @@ function inputToSearch(input: CalculatorInput, taxYear: string): SearchParams {
 
   if (taxYear !== DEFAULT_TAX_YEAR) params.year = taxYear;
   if (input.country !== 'england') params.country = input.country;
+  if (input.niCategory !== 'A') params.niCat = input.niCategory;
+  if (input.isBlind) params.blind = true;
   if (input.grossSalary) params.salary = input.grossSalary;
   if (input.bonus) params.bonus = input.bonus;
   if (input.taxableBenefits) params.bik = input.taxableBenefits;
@@ -117,6 +123,8 @@ export const Route = createFileRoute('/')({
     return {
       year: search.year as string | undefined,
       country: search.country as Country | undefined,
+      niCat: search.niCat as NiCategory | undefined,
+      blind: search.blind === true || search.blind === 'true' || undefined,
       salary: search.salary ? Number(search.salary) : undefined,
       bonus: search.bonus ? Number(search.bonus) : undefined,
       bik: search.bik ? Number(search.bik) : undefined,

@@ -6,6 +6,7 @@
     "taperThreshold": 100000,
     "taperRate": 0.5
   },
+  "blindPersonsAllowance": 3130,
   "incomeTax": {
     "bands": [
       { "name": "Basic rate", "rate": 0.2, "from": 0, "to": 37700 },

@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import type { CalculatorInput } from '~/lib/calculator';
-import type { TaxRules, UndergraduatePlanId, Country } from '~/lib/tax-rules';
+import type {
+  TaxRules,
+  UndergraduatePlanId,
+  Country,
+  NiCategory,
+} from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { InputField } from './InputField';
 import { Tooltip } from './Tooltip';
@@ -180,6 +185,35 @@ export function CalculatorForm({
             </p>
           )}
         </div>
+        <div className="mt-3">
+          <label className="block text-sm font-medium text-gray-700">
+            NI category
+          </label>
+          <select
+            value={input.niCategory}
+            onChange={(e) =>
+              update({ niCategory: e.target.value as NiCategory })
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="A">A — Standard</option>
+            <option value="C">C — Over state pension age</option>
+          </select>
+          {input.niCategory === 'C' && (
+            <p className="mt-1 text-xs text-gray-500">
+              No employee National Insurance contributions
+            </p>
+          )}
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={input.isBlind}
+            onChange={(e) => update({ isBlind: e.target.checked })}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Registered blind or severely sight impaired
+        </label>
       </section>
 
       <section className="py-5 first:pt-0 last:pb-0">

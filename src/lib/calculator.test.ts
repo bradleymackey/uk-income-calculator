@@ -13,6 +13,8 @@ const rules = getTaxRules('2025-26');
 function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
   return {
     country: 'england',
+    niCategory: 'A',
+    isBlind: false,
     grossSalary: 0,
     bonus: 0,
     taxableBenefits: 0,
@@ -844,6 +846,130 @@ describe('2026/27 tax year', () => {
   });
 });
 
+// --- Historical tax years ---
+
+describe('2020/21 tax year', () => {
+  const rules2021 = getTaxRules('2020-21');
+
+  it('PA is £12,500', () => {
+    const r = calculateTax(makeInput({ grossSalary: 50000 }), rules2021);
+    expect(r.personalAllowance).toBe(12500);
+  });
+
+  it('additional rate at £150,000 (not £125,140)', () => {
+    const r = calculateTax(makeInput({ grossSalary: 160000 }), rules2021);
+    // PA = 0, taxable = 160000
+    // Basic: 37500 * 0.20 = 7500
+    // Higher: (150000 - 37500) * 0.40 = 45000
+    // Additional: (160000 - 150000) * 0.45 = 4500
+    expect(r.incomeTax).toBeCloseTo(57000, 2);
+  });
+
+  it('NI at 12% with PT £9,500', () => {
+    const r = calculateTax(makeInput({ grossSalary: 30000 }), rules2021);
+    // NI: (30000 - 9500) * 0.12 = 2460
+    expect(r.nationalInsurance).toBeCloseTo(2460, 2);
+  });
+
+  it('Plan 5 does not exist', () => {
+    const r = calculateTax(
+      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      rules2021,
+    );
+    expect(r.studentLoanRepayment).toBe(0);
+  });
+
+  it('HICBC threshold is £50,000', () => {
+    const r = calculateTax(
+      makeInput({ grossSalary: 55000, numberOfChildren: 1 }),
+      rules2021,
+    );
+    // (55000 - 50000) / (60000 - 50000) = 50% clawback
+    const annual = 21.05 * 52;
+    expect(r.childBenefit!.hicbcCharge).toBeCloseTo(annual * 0.5, 2);
+  });
+});
+
+describe('2022/23 tax year', () => {
+  const rules2223 = getTaxRules('2022-23');
+
+  it('NI at 13.25% (Health & Social Care Levy)', () => {
+    const r = calculateTax(makeInput({ grossSalary: 40000 }), rules2223);
+    // NI: (40000 - 12570) * 0.1325 = 3634.47...
+    expect(r.nationalInsurance).toBeCloseTo((40000 - 12570) * 0.1325, 2);
+  });
+
+  it('additional rate still at £150,000', () => {
+    const r = calculateTax(makeInput({ grossSalary: 160000 }), rules2223);
+    const bands = r.incomeTaxBands;
+    expect(bands[bands.length - 1].name).toBe('Additional rate');
+    expect(bands[bands.length - 1].amount).toBeCloseTo(10000, 2);
+  });
+});
+
+describe('2023/24 tax year', () => {
+  const rules2324 = getTaxRules('2023-24');
+
+  it('additional rate lowered to £125,140', () => {
+    const r = calculateTax(makeInput({ grossSalary: 130000 }), rules2324);
+    const bands = r.incomeTaxBands;
+    expect(bands[bands.length - 1].name).toBe('Additional rate');
+    expect(bands[bands.length - 1].amount).toBeCloseTo(130000 - 125140, 2);
+  });
+
+  it('NI at 12%', () => {
+    const r = calculateTax(makeInput({ grossSalary: 40000 }), rules2324);
+    expect(r.nationalInsurance).toBeCloseTo((40000 - 12570) * 0.12, 2);
+  });
+
+  it('Plan 5 exists from 2023-24', () => {
+    const r = calculateTax(
+      makeInput({ grossSalary: 30000, undergraduatePlan: 'plan5' }),
+      rules2324,
+    );
+    expect(r.studentLoanRepayment).toBeCloseTo((30000 - 25000) * 0.09, 2);
+  });
+
+  it('Scottish advanced rate introduced at 45%', () => {
+    const r = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 80000 }),
+      rules2324,
+    );
+    // Should have 5 bands (starter, basic, intermediate, higher, advanced)
+    expect(r.incomeTaxBands.length).toBe(5);
+    expect(r.incomeTaxBands[4].name).toBe('Advanced rate');
+    expect(r.incomeTaxBands[4].rate).toBe(0.45);
+  });
+});
+
+describe('2024/25 tax year', () => {
+  const rules2425 = getTaxRules('2024-25');
+
+  it('NI cut to 8%', () => {
+    const r = calculateTax(makeInput({ grossSalary: 40000 }), rules2425);
+    expect(r.nationalInsurance).toBeCloseTo((40000 - 12570) * 0.08, 2);
+  });
+
+  it('HICBC threshold raised to £60,000', () => {
+    // £55k should have no HICBC in 2024-25 (threshold £60k)
+    const r = calculateTax(
+      makeInput({ grossSalary: 55000, numberOfChildren: 1 }),
+      rules2425,
+    );
+    expect(r.childBenefit!.hicbcCharge).toBe(0);
+  });
+
+  it('Scottish top rate at 48%', () => {
+    const r = calculateTax(
+      makeInput({ country: 'scotland', grossSalary: 200000 }),
+      rules2425,
+    );
+    const topBand = r.incomeTaxBands[r.incomeTaxBands.length - 1];
+    expect(topBand.name).toBe('Top rate');
+    expect(topBand.rate).toBe(0.48);
+  });
+});
+
 // --- Scottish income tax ---
 
 describe('Scottish income tax', () => {
@@ -1546,5 +1672,151 @@ describe('child benefit', () => {
     const noChildren = calculateTax(makeInput({ grossSalary: 70000 }), rules);
     // Effective rate should be higher with HICBC
     expect(result.effectiveRate).toBeGreaterThan(noChildren.effectiveRate);
+  });
+});
+
+// --- Blind Person's Allowance ---
+
+describe('blind persons allowance', () => {
+  it('adds BPA on top of personal allowance', () => {
+    const blind = calculateTax(
+      makeInput({ grossSalary: 50000, isBlind: true }),
+      rules,
+    );
+    const notBlind = calculateTax(makeInput({ grossSalary: 50000 }), rules);
+
+    // BPA for 2025-26 is £3,130
+    expect(blind.personalAllowance).toBe(12570 + 3130);
+    expect(notBlind.personalAllowance).toBe(12570);
+    expect(blind.incomeTax).toBeLessThan(notBlind.incomeTax);
+  });
+
+  it('BPA is not subject to income taper', () => {
+    // At £125,140: standard PA fully tapered to £0
+    const blind = calculateTax(
+      makeInput({ grossSalary: 125140, isBlind: true }),
+      rules,
+    );
+    // PA tapered to 0, but BPA still applies
+    expect(blind.personalAllowance).toBe(3130);
+  });
+
+  it('BPA still applies at £200,000', () => {
+    const blind = calculateTax(
+      makeInput({ grossSalary: 200000, isBlind: true }),
+      rules,
+    );
+    expect(blind.personalAllowance).toBe(3130);
+  });
+
+  it('BPA reduces taxable income correctly', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 30000, isBlind: true }),
+      rules,
+    );
+    // PA = 12570 + 3130 = 15700
+    // Taxable: 30000 - 15700 = 14300
+    // Tax: 14300 * 0.20 = 2860
+    expect(result.personalAllowance).toBe(15700);
+    expect(result.incomeTax).toBeCloseTo(2860, 2);
+  });
+});
+
+// --- NI Category ---
+
+describe('NI category', () => {
+  it('category A has normal NI', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'A' }),
+      rules,
+    );
+    expect(result.nationalInsurance).toBeGreaterThan(0);
+    expect(result.niBands.length).toBeGreaterThan(0);
+  });
+
+  it('category C has zero employee NI', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'C' }),
+      rules,
+    );
+    expect(result.nationalInsurance).toBe(0);
+    expect(result.niBands).toHaveLength(0);
+  });
+
+  it('category C does not affect income tax', () => {
+    const catA = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'A' }),
+      rules,
+    );
+    const catC = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'C' }),
+      rules,
+    );
+    expect(catC.incomeTax).toBe(catA.incomeTax);
+  });
+
+  it('category C increases take-home pay', () => {
+    const catA = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'A' }),
+      rules,
+    );
+    const catC = calculateTax(
+      makeInput({ grossSalary: 50000, niCategory: 'C' }),
+      rules,
+    );
+    expect(catC.netAnnualPay).toBeGreaterThan(catA.netAnnualPay);
+    // Difference should be exactly the NI amount
+    expect(catC.netAnnualPay - catA.netAnnualPay).toBeCloseTo(
+      catA.nationalInsurance,
+      2,
+    );
+  });
+
+  it('category C marginal rate excludes NI', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 30000, niCategory: 'C' }),
+      rules,
+    );
+    // Only income tax 20%, no NI
+    expect(result.marginalRate).toBeCloseTo(0.2, 2);
+  });
+
+  it('category C does not affect student loans', () => {
+    const catA = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        niCategory: 'A',
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    const catC = calculateTax(
+      makeInput({
+        grossSalary: 40000,
+        niCategory: 'C',
+        undergraduatePlan: 'plan2',
+      }),
+      rules,
+    );
+    expect(catC.studentLoanRepayment).toBe(catA.studentLoanRepayment);
+  });
+
+  it('employer NI still applies for category C salary sacrifice', () => {
+    const result = calculateTax(
+      makeInput({
+        grossSalary: 50000,
+        niCategory: 'C',
+        pensionContribution: {
+          type: 'percentage',
+          value: 5,
+          salarySacrifice: true,
+        },
+        employerNiPassbackPercent: 100,
+      }),
+      rules,
+    );
+    // Employer NI saving still exists even though employee pays no NI
+    expect(result.employerNiSaving).toBeGreaterThan(0);
+    expect(result.employerNiPassback).toBeGreaterThan(0);
   });
 });

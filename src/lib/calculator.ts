@@ -1,8 +1,15 @@
-import type { TaxRules, UndergraduatePlanId, Country } from './tax-rules';
+import type {
+  TaxRules,
+  UndergraduatePlanId,
+  Country,
+  NiCategory,
+} from './tax-rules';
 import { getIncomeTaxBands } from './tax-rules';
 
 export interface CalculatorInput {
   country: Country;
+  niCategory: NiCategory;
+  isBlind: boolean;
   grossSalary: number;
   bonus: number;
   taxableBenefits: number;
@@ -99,15 +106,23 @@ export interface CalculationResult {
 export function calculatePersonalAllowance(
   adjustedNetIncome: number,
   rules: TaxRules,
+  isBlind: boolean = false,
 ): number {
   const { amount, taperThreshold, taperRate } = rules.personalAllowance;
+  let pa: number;
   if (adjustedNetIncome <= taperThreshold) {
-    return amount;
+    pa = amount;
+  } else {
+    const reduction = Math.floor(
+      (adjustedNetIncome - taperThreshold) * taperRate,
+    );
+    pa = Math.max(0, amount - reduction);
   }
-  const reduction = Math.floor(
-    (adjustedNetIncome - taperThreshold) * taperRate,
-  );
-  return Math.max(0, amount - reduction);
+  // BPA is not subject to the income taper — always added on top
+  if (isBlind) {
+    pa += rules.blindPersonsAllowance;
+  }
+  return pa;
 }
 
 export function calculateBandedTax(
@@ -216,17 +231,21 @@ function totalDeductionsAtSalary(
   const niable = salary + input.bonus + input.rsuVests - ssDeduction;
   const adjusted = gross - ssDeduction - sipp;
 
-  const pa = calculatePersonalAllowance(adjusted, rules);
+  const pa = calculatePersonalAllowance(adjusted, rules, input.isBlind);
   const taxable = Math.max(0, adjusted - pa);
   const incomeTaxBands = getIncomeTaxBands(rules, input.country);
   const tax = calculateBandedTax(taxable, incomeTaxBands).reduce(
     (s, b) => s + b.tax,
     0,
   );
-  const ni = calculateBandedTax(
-    niable,
-    rules.nationalInsurance.employeeClass1.bands,
-  ).reduce((s, b) => s + b.tax, 0);
+  // Category C (over state pension age): no employee NI
+  const ni =
+    input.niCategory === 'C'
+      ? 0
+      : calculateBandedTax(
+          niable,
+          rules.nationalInsurance.employeeClass1.bands,
+        ).reduce((s, b) => s + b.tax, 0);
 
   let studentLoan = 0;
   if (input.undergraduatePlan !== 'none') {
@@ -337,10 +356,11 @@ export function calculateTax(
   const adjustedNetIncome =
     totalGrossIncome - salarySacrificeDeduction - sippContribution;
 
-  // 5. Personal allowance (with tapering)
+  // 5. Personal allowance (with tapering + BPA)
   const personalAllowance = calculatePersonalAllowance(
     adjustedNetIncome,
     rules,
+    input.isBlind,
   );
 
   // 6. Taxable income
@@ -351,11 +371,14 @@ export function calculateTax(
   const incomeTaxBands = calculateBandedTax(taxableIncome, activeBands);
   const incomeTax = incomeTaxBands.reduce((sum, b) => sum + b.tax, 0);
 
-  // 8. National Insurance
-  const niBands = calculateBandedTax(
-    niableIncome,
-    rules.nationalInsurance.employeeClass1.bands,
-  );
+  // 8. National Insurance (Category C = over state pension age, no employee NI)
+  const niBands =
+    input.niCategory === 'C'
+      ? []
+      : calculateBandedTax(
+          niableIncome,
+          rules.nationalInsurance.employeeClass1.bands,
+        );
   const nationalInsurance = niBands.reduce((sum, b) => sum + b.tax, 0);
 
   // 9. Student loans
@@ -453,16 +476,23 @@ export function calculateTax(
     const payeGross = grossSalary + bonus + taxableBenefits;
     const payeNiable = grossSalary + bonus - salarySacrificeDeduction;
     const payeAdjusted = payeGross - salarySacrificeDeduction;
-    const payePA = calculatePersonalAllowance(payeAdjusted, rules);
+    const payePA = calculatePersonalAllowance(
+      payeAdjusted,
+      rules,
+      input.isBlind,
+    );
     const payeTaxable = Math.max(0, payeAdjusted - payePA);
     const payeIncomeTax = calculateBandedTax(payeTaxable, activeBands).reduce(
       (sum, b) => sum + b.tax,
       0,
     );
-    const payeNI = calculateBandedTax(
-      payeNiable,
-      rules.nationalInsurance.employeeClass1.bands,
-    ).reduce((sum, b) => sum + b.tax, 0);
+    const payeNI =
+      input.niCategory === 'C'
+        ? 0
+        : calculateBandedTax(
+            payeNiable,
+            rules.nationalInsurance.employeeClass1.bands,
+          ).reduce((sum, b) => sum + b.tax, 0);
     const payeStudentLoan =
       (input.undergraduatePlan !== 'none'
         ? calculateStudentLoanForPlan(
