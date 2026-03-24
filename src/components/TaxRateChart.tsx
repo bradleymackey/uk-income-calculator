@@ -107,31 +107,55 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     if (maxIncome <= 0) return [];
 
     // Tax boundaries with descriptions
+    const {
+      personalAllowance: pa,
+      incomeTax,
+      nationalInsurance: ni,
+    } = taxRules;
+    const niBands = ni.employeeClass1.bands;
+    const niUel = ni.employeeClass1.upperEarningsLimit;
+    const niUpperRate = niBands.length > 1 ? niBands[1].rate : 0;
+
     const boundaries: { value: number; label: string }[] = [
       {
-        value: taxRules.personalAllowance.amount,
+        value: pa.amount,
         label: 'Personal allowance — income tax and NI start',
       },
       {
-        value: taxRules.nationalInsurance.employeeClass1.upperEarningsLimit,
-        label: 'NI upper earnings limit — NI drops to 2%',
-      },
-      {
-        value:
-          taxRules.personalAllowance.amount + taxRules.incomeTax.bands[0].to!,
-        label: 'Higher rate threshold — income tax rises to 40%',
-      },
-      {
-        value: taxRules.personalAllowance.taperThreshold,
-        label: 'PA taper starts — effective 60% marginal rate',
-      },
-      {
-        value:
-          taxRules.personalAllowance.taperThreshold +
-          taxRules.personalAllowance.amount * 2,
-        label: 'PA fully tapered — additional rate begins',
+        value: niUel,
+        label: `NI upper earnings limit — NI drops to ${(niUpperRate * 100).toFixed(0)}%`,
       },
     ];
+
+    // Income tax band thresholds (shifted by PA)
+    for (let i = 0; i < incomeTax.bands.length; i++) {
+      const band = incomeTax.bands[i];
+      const nextBand = incomeTax.bands[i + 1];
+      if (band.to !== null && nextBand) {
+        boundaries.push({
+          value: pa.amount + band.to,
+          label: `${nextBand.name} threshold — income tax rises to ${(nextBand.rate * 100).toFixed(0)}%`,
+        });
+      }
+    }
+
+    // PA taper zone — compute actual marginal rate at taper start
+    const taperStartRate = computeRatesAtIncome(
+      pa.taperThreshold + 1,
+      input,
+      taxRules,
+    ).marginal;
+    const lastBand = incomeTax.bands[incomeTax.bands.length - 1];
+    boundaries.push(
+      {
+        value: pa.taperThreshold,
+        label: `PA taper starts — ${Math.round(taperStartRate)}% marginal rate`,
+      },
+      {
+        value: pa.taperThreshold + pa.amount / pa.taperRate,
+        label: `PA fully tapered — ${lastBand.name.toLowerCase()} begins`,
+      },
+    );
 
     // Student loan thresholds
     if (input.undergraduatePlan !== 'none') {
