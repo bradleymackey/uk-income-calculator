@@ -26,10 +26,25 @@ const COLORS = {
   rsu: '#10b981',
 };
 
-function SectorShape(props: PieSectorShapeProps) {
+interface SectorColors {
+  primary: string;
+  secondary: string;
+  muted: string;
+  stroke: string;
+}
+
+function SectorShape(
+  props: PieSectorShapeProps & { sectorColors?: SectorColors },
+) {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, isActive } =
     props;
   const payload = props as PieSectorShapeProps & Slice;
+  const colors = (props as { sectorColors?: SectorColors }).sectorColors ?? {
+    primary: '#111827',
+    secondary: '#6b7280',
+    muted: '#9ca3af',
+    stroke: '#fff',
+  };
 
   return (
     <g>
@@ -41,7 +56,7 @@ function SectorShape(props: PieSectorShapeProps) {
         startAngle={startAngle}
         endAngle={endAngle}
         fill={payload.color}
-        stroke="#fff"
+        stroke={colors.stroke}
         strokeWidth={2}
       />
       {isActive && (
@@ -50,7 +65,7 @@ function SectorShape(props: PieSectorShapeProps) {
             x={cx}
             y={cy - 10}
             textAnchor="middle"
-            fill="#111827"
+            fill={colors.primary}
             fontSize={13}
             fontWeight={600}
           >
@@ -60,7 +75,7 @@ function SectorShape(props: PieSectorShapeProps) {
             x={cx}
             y={cy + 10}
             textAnchor="middle"
-            fill="#6b7280"
+            fill={colors.secondary}
             fontSize={11}
           >
             {formatCurrency(payload.value)}
@@ -69,7 +84,7 @@ function SectorShape(props: PieSectorShapeProps) {
             x={cx}
             y={cy + 26}
             textAnchor="middle"
-            fill="#9ca3af"
+            fill={colors.muted}
             fontSize={10}
           >
             {((payload.percent ?? 0) * 100).toFixed(1)}%
@@ -80,9 +95,22 @@ function SectorShape(props: PieSectorShapeProps) {
   );
 }
 
+function useDarkMode() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return dark;
+}
+
 export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
   const [mounted, setMounted] = useState(false);
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
+  const dark = useDarkMode();
   useEffect(() => setMounted(true), []);
 
   const slices = useMemo(() => {
@@ -223,16 +251,32 @@ export function IncomeBreakdownChart({ result }: IncomeBreakdownChartProps) {
               cy="50%"
               innerRadius={65}
               outerRadius={105}
-              shape={(props: PieSectorShapeProps) => (
-                <SectorShape
-                  {...props}
-                  isActive={
-                    activeLabel === null
-                      ? props.index === 0
-                      : (props as unknown as Slice).name === activeLabel
-                  }
-                />
-              )}
+              shape={(props: PieSectorShapeProps) => {
+                const sectorColors: SectorColors = dark
+                  ? {
+                      primary: '#f5f5f5',
+                      secondary: '#a3a3a3',
+                      muted: '#737373',
+                      stroke: '#171717',
+                    }
+                  : {
+                      primary: '#111827',
+                      secondary: '#6b7280',
+                      muted: '#9ca3af',
+                      stroke: '#ffffff',
+                    };
+                return (
+                  <SectorShape
+                    {...props}
+                    sectorColors={sectorColors}
+                    isActive={
+                      activeLabel === null
+                        ? props.index === 0
+                        : (props as unknown as Slice).name === activeLabel
+                    }
+                  />
+                );
+              }}
               onMouseEnter={handleEnter}
               onMouseLeave={handleLeave}
               isAnimationActive={false}
