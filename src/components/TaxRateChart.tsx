@@ -34,12 +34,19 @@ function computeRatesAtIncome(
   baseInput: CalculatorInput,
   rules: TaxRules,
 ): DataPoint {
-  // Scale salary to hit the target gross income, keeping other inputs the same
-  const nonSalaryIncome =
-    baseInput.bonus + baseInput.taxableBenefits + baseInput.rsuVests;
-  const salary = Math.max(0, targetGross - nonSalaryIncome);
-
-  const r = calculateTax({ ...baseInput, grossSalary: salary }, rules);
+  // Treat targetGross as the entire salary, zero out other income.
+  // Keeps the user's pension %, salary sacrifice, student loan, etc.
+  const r = calculateTax(
+    {
+      ...baseInput,
+      grossSalary: targetGross,
+      bonus: 0,
+      taxableBenefits: 0,
+      rsuVests: 0,
+      rsuTaxWithheld: false,
+    },
+    rules,
+  );
 
   const totalTaxAndNi =
     r.incomeTax + r.nationalInsurance + r.studentLoanRepayment;
