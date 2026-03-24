@@ -81,23 +81,55 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     const maxIncome = totalGross;
     if (maxIncome <= 0) return [];
 
-    const points: DataPoint[] = [];
-    const thresholds = [
-      0, 5000, 10000, 12570, 15000, 20000, 25000, 30000, 37700, 40000, 45000,
-      50000, 50270, 55000, 60000, 70000, 80000, 90000, 99999, 100000, 105000,
-      110000, 115000, 120000, 125140, 130000, 140000, 150000, 175000, 200000,
-      250000, 300000, 400000, 500000,
-    ];
-
-    for (const t of thresholds) {
-      if (t <= maxIncome) {
-        points.push(computeRatesAtIncome(t, input, taxRules));
+    // Tax system boundaries — these always take priority
+    const boundaries = new Set<number>([
+      0,
+      taxRules.personalAllowance.amount, // 12570
+      taxRules.personalAllowance.amount + taxRules.incomeTax.bands[0].to!, // 50270 (PA + basic rate band)
+      taxRules.personalAllowance.taperThreshold, // 100000
+      taxRules.personalAllowance.taperThreshold +
+        taxRules.personalAllowance.amount * 2, // 125140
+      taxRules.nationalInsurance.employeeClass1.primaryThreshold,
+      taxRules.nationalInsurance.employeeClass1.upperEarningsLimit,
+    ]);
+    for (const band of taxRules.incomeTax.bands) {
+      if (band.to !== null) {
+        boundaries.add(taxRules.personalAllowance.amount + band.to);
       }
     }
 
-    const roundedMax = Math.round(maxIncome);
-    if (!thresholds.includes(roundedMax)) {
-      points.push(computeRatesAtIncome(roundedMax, input, taxRules));
+    // Student loan thresholds (only for selected plans)
+    if (input.undergraduatePlan !== 'none') {
+      const plan = taxRules.studentLoans[input.undergraduatePlan];
+      if (plan) boundaries.add(plan.threshold);
+    }
+    if (input.hasPostgraduateLoan) {
+      const pg = taxRules.studentLoans['postgraduate'];
+      if (pg) boundaries.add(pg.threshold);
+    }
+
+    // Round-number increments for smooth chart display
+    const increments: number[] = [];
+    for (let i = 5000; i <= 200000; i += 5000) increments.push(i);
+    for (let i = 250000; i <= 500000; i += 50000) increments.push(i);
+
+    // Deduplicate: drop round numbers that are within £2000 of a boundary
+    const MIN_GAP = 2000;
+    const boundaryArr = [...boundaries];
+    const filtered = increments.filter(
+      (inc) =>
+        !boundaryArr.some((b) => Math.abs(inc - b) < MIN_GAP && inc !== b),
+    );
+
+    // Combine boundaries + filtered increments + user's gross
+    const allPoints = new Set([...boundaries, ...filtered]);
+    allPoints.add(Math.round(maxIncome));
+
+    const points: DataPoint[] = [];
+    for (const t of allPoints) {
+      if (t <= maxIncome && t >= 0) {
+        points.push(computeRatesAtIncome(t, input, taxRules));
+      }
     }
 
     points.sort((a, b) => a.income - b.income);
