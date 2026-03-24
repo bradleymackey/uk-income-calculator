@@ -231,9 +231,13 @@ function computeMarginalRate(
   rules: TaxRules,
 ): number {
   if (currentSalary <= 0) return 0;
+  // Use a £2 step to smooth out the PA taper floor effect.
+  // The taper removes £1 of PA per £2 of income, so a £1 step
+  // alternates between 42% and 82% instead of showing the true 62%.
+  const step = 2;
   const atCurrent = totalDeductionsAtSalary(currentSalary, input, rules);
-  const atNext = totalDeductionsAtSalary(currentSalary + 1, input, rules);
-  return atNext - atCurrent;
+  const atNext = totalDeductionsAtSalary(currentSalary + step, input, rules);
+  return (atNext - atCurrent) / step;
 }
 
 export function calculateTax(
