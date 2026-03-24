@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import { CalculatorForm } from '~/components/CalculatorForm';
+import { PrintView } from '~/components/PrintView';
 import { ResultsBreakdown } from '~/components/ResultsBreakdown';
 import {
   calculateTax,
@@ -272,10 +273,29 @@ function HomePage() {
     <div className="min-h-screen bg-neutral-50 print:bg-white dark:bg-neutral-950">
       <header className="mx-auto w-full max-w-5xl px-4 pt-6">
         <nav className="flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-700">
-          <span className="text-lg font-bold tracking-tight">
+          <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
             UK Income Tax Calculator
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 print:hidden dark:text-neutral-500 dark:hover:text-neutral-300"
+              title="Print"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.212 2.212 0 0 1 18 8.653v4.097A2.25 2.25 0 0 1 15.75 15h-.75v.75c0 .966-.784 1.75-1.75 1.75h-6.5A1.75 1.75 0 0 1 5 15.75V15h-.75A2.25 2.25 0 0 1 2 12.75V8.653c0-1.082.775-2.034 1.874-2.198.374-.056.75-.107 1.126-.153V2.75ZM6.5 2.75v3.386a41.7 41.7 0 0 0-3 0V2.75A.25.25 0 0 1 6.75 2.5h6.5a.25.25 0 0 1 .25.25v3.386a41.7 41.7 0 0 0-3 0V2.75ZM6.5 15v.75a.25.25 0 0 0 .25.25h6.5a.25.25 0 0 0 .25-.25V15h-7Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
           </span>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-3 text-sm print:hidden">
             <select
               value={taxYear}
               onChange={(e) => handleYearChange(e.target.value)}
@@ -292,21 +312,22 @@ function HomePage() {
         </nav>
       </header>
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 print:block print:space-y-6 lg:grid-cols-2">
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 print:rounded-none print:p-0 print:shadow-none print:ring-0 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
+        <div className="grid grid-cols-1 gap-8 print:hidden lg:grid-cols-2">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <CalculatorForm
               input={input}
               onChange={handleInputChange}
               taxRules={rules}
             />
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 print:rounded-none print:p-0 print:shadow-none print:ring-0 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
+          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-900 dark:shadow-none dark:ring-neutral-800">
             <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Take-Home Pay Breakdown
             </h2>
             <ResultsBreakdown input={input} result={result} taxRules={rules} />
           </div>
         </div>
+        <PrintView input={input} result={result} taxRules={rules} />
       </div>
       <footer className="mx-auto max-w-5xl px-4 pb-6 pt-2 text-center text-xs text-neutral-400 print:hidden dark:text-neutral-500">
         <p>
