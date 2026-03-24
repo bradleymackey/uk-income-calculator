@@ -29,10 +29,10 @@ const FIELD_LABELS: Record<OptionalField, string> = {
   benefits: 'Benefits (BIK)',
   rsus: 'RSUs',
   salarySacrifice: 'Salary Sacrifice',
+  selfEmployment: 'Self-Employment',
   pension: 'Pension',
   employerPension: 'Employer pension',
   sipp: 'SIPP',
-  selfEmployment: 'Self-Employment',
   childBenefit: 'Child Benefit',
   studentLoan: 'Student Loan',
 };
@@ -415,6 +415,25 @@ export function CalculatorForm({
         </section>
       )}
 
+      {isVisible('selfEmployment') && (
+        <section className="py-5 first:pt-0 last:pb-0">
+          <OptionalCard
+            label="Self-Employment"
+            onRemove={() => hide('selfEmployment')}
+          >
+            <InputField
+              label="Annual self-employment profit"
+              value={input.selfEmploymentIncome || ''}
+              onChange={(v) =>
+                update({ selfEmploymentIncome: parseFloat(v) || 0 })
+              }
+              prefix="£"
+              tooltip="Net profit from self-employment after allowable expenses. Taxed as income and subject to Class 4 NI (not Class 1)."
+            />
+          </OptionalCard>
+        </section>
+      )}
+
       {isVisible('pension') && (
         <section className="py-5 first:pt-0 last:pb-0">
           <OptionalCard label="Pension" onRemove={() => hide('pension')}>
@@ -587,25 +606,6 @@ export function CalculatorForm({
                 </OptionalCard>
               )}
             </div>
-          </OptionalCard>
-        </section>
-      )}
-
-      {isVisible('selfEmployment') && (
-        <section className="py-5 first:pt-0 last:pb-0">
-          <OptionalCard
-            label="Self-Employment"
-            onRemove={() => hide('selfEmployment')}
-          >
-            <InputField
-              label="Annual self-employment profit"
-              value={input.selfEmploymentIncome || ''}
-              onChange={(v) =>
-                update({ selfEmploymentIncome: parseFloat(v) || 0 })
-              }
-              prefix="£"
-              tooltip="Net profit from self-employment after allowable expenses. Taxed as income and subject to Class 4 NI (not Class 1)."
-            />
           </OptionalCard>
         </section>
       )}
