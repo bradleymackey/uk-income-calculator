@@ -16,6 +16,6 @@ FROM base AS runtime
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
-COPY package.json ./
+COPY package.json server-entry.mjs ./
 EXPOSE 3000
-CMD ["node", "dist/server/server.js"]
+CMD ["node", "server-entry.mjs"]
