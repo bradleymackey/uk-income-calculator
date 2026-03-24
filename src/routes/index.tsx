@@ -157,6 +157,60 @@ export const Route = createFileRoute('/')({
   },
 });
 
+function getTaxYearStatus(taxYear: string): {
+  kind: 'historical' | 'current' | 'upcoming';
+  week?: number;
+  daysRemaining?: number;
+} {
+  const [startYearStr] = taxYear.split('-');
+  const startYear = parseInt(startYearStr);
+  // UK tax year: 6 April to 5 April
+  const taxYearStart = new Date(startYear, 3, 6); // April = month 3
+  const taxYearEnd = new Date(startYear + 1, 3, 5);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (today > taxYearEnd) return { kind: 'historical' };
+  if (today < taxYearStart) return { kind: 'upcoming' };
+
+  const msPerDay = 86400000;
+  const daysSinceStart = Math.floor(
+    (today.getTime() - taxYearStart.getTime()) / msPerDay,
+  );
+  const daysRemaining = Math.ceil(
+    (taxYearEnd.getTime() - today.getTime()) / msPerDay,
+  );
+  const week = Math.floor(daysSinceStart / 7) + 1;
+
+  return { kind: 'current', week, daysRemaining };
+}
+
+function TaxYearBadge({ taxYear }: { taxYear: string }) {
+  const status = getTaxYearStatus(taxYear);
+
+  if (status.kind === 'historical') {
+    return (
+      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+        Historical
+      </span>
+    );
+  }
+
+  if (status.kind === 'upcoming') {
+    return (
+      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+        Upcoming
+      </span>
+    );
+  }
+
+  return (
+    <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+      Week {status.week} &middot; {status.daysRemaining} days left
+    </span>
+  );
+}
+
 function HomePage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -190,9 +244,12 @@ function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            UK Income Tax Calculator
-          </h1>
+          <div className="flex items-start justify-between">
+            <h1 className="text-3xl font-bold text-gray-900">
+              UK Income Tax Calculator
+            </h1>
+            <TaxYearBadge taxYear={taxYear} />
+          </div>
           <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
             <select
               value={taxYear}
