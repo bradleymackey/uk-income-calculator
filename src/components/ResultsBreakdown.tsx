@@ -2,6 +2,7 @@ import type { CalculationResult, CalculatorInput } from '~/lib/calculator';
 import type { TaxRules } from '~/lib/tax-rules';
 import { formatCurrency, formatPercentage } from '~/lib/formatters';
 import { TaxRateChart } from './TaxRateChart';
+import { IncomeBreakdownChart } from './IncomeBreakdownChart';
 
 interface ResultsBreakdownProps {
   input: CalculatorInput;
@@ -146,6 +147,7 @@ export function ResultsBreakdown({
             )}
         </div>
         <TaxRateChart input={input} result={result} taxRules={taxRules} />
+        <IncomeBreakdownChart result={result} />
         {result.rsuVests > 0 && (
           <>
             <div className="my-2 border-t border-blue-200" />
