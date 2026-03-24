@@ -446,16 +446,34 @@ export function CalculatorForm({
                 </Tooltip>
               </label>
               {input.pensionContribution.salarySacrifice && (
-                <InputField
-                  label="Employer NI savings passback"
-                  value={input.employerNiPassbackPercent || ''}
-                  onChange={(v) =>
-                    update({ employerNiPassbackPercent: parseFloat(v) || 0 })
-                  }
-                  suffix="%"
-                  min={0}
-                  tooltip="When you salary sacrifice, your employer also saves on NI. Some employers pass a percentage of this saving into your pension."
-                />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Employer NI savings passback
+                    </label>
+                    <span className="text-sm font-medium text-gray-900">
+                      {input.employerNiPassbackPercent}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={input.employerNiPassbackPercent}
+                    onChange={(e) =>
+                      update({
+                        employerNiPassbackPercent: parseInt(e.target.value),
+                      })
+                    }
+                    className="mt-1 w-full accent-blue-600"
+                  />
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    When you salary sacrifice, your employer also saves on NI.
+                    Some employers pass a percentage of this saving into your
+                    pension.
+                  </p>
+                </div>
               )}
               {isVisible('employerPension') && (
                 <OptionalCard
