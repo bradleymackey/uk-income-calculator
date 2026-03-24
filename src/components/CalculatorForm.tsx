@@ -229,15 +229,14 @@ export function CalculatorForm({
       },
     });
 
-  const hiddenFields = (Object.keys(FIELD_LABELS) as OptionalField[]).filter(
-    (f) => {
-      if (isVisible(f)) return false;
-      // Only show child toggle buttons when parent is visible
-      const parent = CHILD_FIELDS[f];
-      if (parent && !isVisible(parent)) return false;
-      return true;
-    },
-  );
+  const hiddenChildFields = (parent: OptionalField) =>
+    (Object.keys(FIELD_LABELS) as OptionalField[]).filter(
+      (f) => !isVisible(f) && CHILD_FIELDS[f] === parent,
+    );
+
+  const hiddenTopLevelFields = (
+    Object.keys(FIELD_LABELS) as OptionalField[]
+  ).filter((f) => !isVisible(f) && !CHILD_FIELDS[f]);
 
   return (
     <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
@@ -484,6 +483,17 @@ export function CalculatorForm({
                 />
               </OptionalCard>
             )}
+            {hiddenChildFields('income').length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {hiddenChildFields('income').map((field) => (
+                  <ToggleButton
+                    key={field}
+                    label={FIELD_LABELS[field]}
+                    onClick={() => show(field)}
+                  />
+                ))}
+              </div>
+            )}
           </OptionalCard>
         </section>
       )}
@@ -710,6 +720,17 @@ export function CalculatorForm({
                   </div>
                 </OptionalCard>
               )}
+              {hiddenChildFields('pension').length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {hiddenChildFields('pension').map((field) => (
+                    <ToggleButton
+                      key={field}
+                      label={FIELD_LABELS[field]}
+                      onClick={() => show(field)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </OptionalCard>
         </section>
@@ -831,9 +852,9 @@ export function CalculatorForm({
         </section>
       )}
 
-      {hiddenFields.length > 0 && (
+      {hiddenTopLevelFields.length > 0 && (
         <div className="flex flex-wrap gap-2 py-4">
-          {hiddenFields.map((field) => (
+          {hiddenTopLevelFields.map((field) => (
             <ToggleButton
               key={field}
               label={FIELD_LABELS[field]}
