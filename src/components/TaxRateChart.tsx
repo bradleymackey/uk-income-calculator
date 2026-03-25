@@ -125,8 +125,25 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     const niUel = ni.employeeClass1.upperEarningsLimit;
     const niUpperRate = niBands.length > 1 ? niBands[1].rate : 0;
     // Effective PA includes blind person's allowance (not subject to taper)
-    const effectivePA =
-      pa.amount + (input.isBlind ? taxRules.blindPersonsAllowance : 0);
+    const bpa = input.isBlind ? taxRules.blindPersonsAllowance : 0;
+    const effectivePA = pa.amount + bpa;
+    const fullTaperPoint = pa.taperThreshold + pa.amount / pa.taperRate;
+
+    // Convert a taxable-income band threshold to the gross income where it's reached,
+    // accounting for the PA taper reducing the allowance above £100k
+    function grossForTaxable(taxable: number): number {
+      // Below taper: full PA applies
+      const g1 = taxable + effectivePA;
+      if (g1 <= pa.taperThreshold) return g1;
+      // Above full taper: only BPA remains (if blind)
+      const g3 = taxable + bpa;
+      if (g3 >= fullTaperPoint) return g3;
+      // In taper zone: solve taxable = G - (pa.amount - (G - threshold) * rate + bpa)
+      return (
+        (taxable + pa.amount + pa.taperThreshold * pa.taperRate + bpa) /
+        (1 + pa.taperRate)
+      );
+    }
 
     const boundaries: { value: number; label: string }[] = [
       {
@@ -139,13 +156,13 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       },
     ];
 
-    // Income tax band thresholds (shifted by effective PA)
+    // Income tax band thresholds (converted to gross income)
     for (let i = 0; i < itBands.length; i++) {
       const band = itBands[i];
       const nextBand = itBands[i + 1];
       if (band.to !== null && nextBand) {
         boundaries.push({
-          value: effectivePA + band.to,
+          value: grossForTaxable(band.to),
           label: `${nextBand.name} threshold — income tax rises to ${(nextBand.rate * 100).toFixed(0)}%`,
         });
       }
@@ -157,15 +174,14 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       input,
       taxRules,
     ).marginal;
-    const lastBand = itBands[itBands.length - 1];
     boundaries.push(
       {
         value: pa.taperThreshold,
         label: `PA taper starts — ${Math.round(taperStartRate)}% marginal rate`,
       },
       {
-        value: pa.taperThreshold + pa.amount / pa.taperRate,
-        label: `PA fully tapered — ${lastBand.name.toLowerCase()} begins`,
+        value: fullTaperPoint,
+        label: 'PA fully tapered',
       },
     );
 
