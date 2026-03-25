@@ -124,10 +124,13 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     const niBands = ni.employeeClass1.bands;
     const niUel = ni.employeeClass1.upperEarningsLimit;
     const niUpperRate = niBands.length > 1 ? niBands[1].rate : 0;
+    // Effective PA includes blind person's allowance (not subject to taper)
+    const effectivePA =
+      pa.amount + (input.isBlind ? taxRules.blindPersonsAllowance : 0);
 
     const boundaries: { value: number; label: string }[] = [
       {
-        value: pa.amount,
+        value: effectivePA,
         label: 'Personal allowance — income tax and NI start',
       },
       {
@@ -136,13 +139,13 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       },
     ];
 
-    // Income tax band thresholds (shifted by PA)
+    // Income tax band thresholds (shifted by effective PA)
     for (let i = 0; i < itBands.length; i++) {
       const band = itBands[i];
       const nextBand = itBands[i + 1];
       if (band.to !== null && nextBand) {
         boundaries.push({
-          value: pa.amount + band.to,
+          value: effectivePA + band.to,
           label: `${nextBand.name} threshold — income tax rises to ${(nextBand.rate * 100).toFixed(0)}%`,
         });
       }
