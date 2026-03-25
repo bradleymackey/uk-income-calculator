@@ -241,7 +241,18 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
       }
     }
 
-    const boundaryValues = new Set(boundaries.map((b) => b.value));
+    // Merge labels for boundaries at the same value
+    const mergedMap = new Map<number, string>();
+    for (const b of boundaries) {
+      const existing = mergedMap.get(b.value);
+      mergedMap.set(b.value, existing ? `${existing}. ${b.label}` : b.label);
+    }
+    const mergedBoundaries = [...mergedMap.entries()].map(([value, label]) => ({
+      value,
+      label,
+    }));
+
+    const boundaryValues = new Set(mergedBoundaries.map((b) => b.value));
 
     // Round-number increments
     const increments: number[] = [];
@@ -265,7 +276,7 @@ export function TaxRateChart({ input, result, taxRules }: TaxRateChartProps) {
     added.add(0);
 
     // Add boundaries
-    for (const b of boundaries) {
+    for (const b of mergedBoundaries) {
       if (b.value <= maxIncome && b.value > 0 && !added.has(b.value)) {
         points.push(computeRatesAtIncome(b.value, input, taxRules, b.label));
         added.add(b.value);
