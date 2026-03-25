@@ -131,25 +131,46 @@ export function ResultsBreakdown({
             label="Adjusted net income"
             value={formatCurrency(result.adjustedNetIncome)}
           />
-          {result.adjustedNetIncome <= 100000 && (
+          {result.adjustedNetIncome <=
+            taxRules.personalAllowance.taperThreshold && (
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              {formatCurrency(100000 - result.adjustedNetIncome)} below the
-              £100k taper threshold
+              {formatCurrency(
+                taxRules.personalAllowance.taperThreshold -
+                  result.adjustedNetIncome,
+              )}{' '}
+              below the{' '}
+              {formatCurrency(taxRules.personalAllowance.taperThreshold)} taper
+              threshold
             </p>
           )}
-          {result.personalAllowance < 12570 && result.personalAllowance > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
-              In the £100k–£125,140 taper zone — 60% marginal rate.{' '}
-              {formatCurrency(125140 - result.adjustedNetIncome)} until fully
-              tapered.
-            </p>
-          )}
-          {result.personalAllowance === 0 &&
-            result.adjustedNetIncome > 100000 && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                Fully tapered — income exceeds £125,140
-              </p>
-            )}
+          {(() => {
+            const { taperThreshold, amount, taperRate } =
+              taxRules.personalAllowance;
+            const fullTaperPoint = taperThreshold + amount / taperRate;
+            if (
+              result.adjustedNetIncome > taperThreshold &&
+              result.adjustedNetIncome < fullTaperPoint
+            ) {
+              return (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  In the {formatCurrency(taperThreshold)}–
+                  {formatCurrency(fullTaperPoint)} taper zone — 60% marginal
+                  rate.{' '}
+                  {formatCurrency(fullTaperPoint - result.adjustedNetIncome)}{' '}
+                  until fully tapered.
+                </p>
+              );
+            }
+            if (result.adjustedNetIncome >= fullTaperPoint) {
+              return (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Fully tapered — income exceeds{' '}
+                  {formatCurrency(fullTaperPoint)}
+                </p>
+              );
+            }
+            return null;
+          })()}
         </div>
         <TaxRateChart input={input} result={result} taxRules={taxRules} />
         <IncomeBreakdownChart result={result} />
@@ -395,9 +416,16 @@ export function ResultsBreakdown({
             label="Allowance"
             value={formatCurrency(result.personalAllowance)}
           />
-          {result.personalAllowance < 12570 && (
+          {result.adjustedNetIncome >
+            taxRules.personalAllowance.taperThreshold && (
             <p className="text-xs text-amber-600 dark:text-amber-400">
-              Reduced from £12,570 due to income over £100,000
+              Reduced from{' '}
+              {formatCurrency(
+                taxRules.personalAllowance.amount +
+                  (input.isBlind ? taxRules.blindPersonsAllowance : 0),
+              )}{' '}
+              due to income over{' '}
+              {formatCurrency(taxRules.personalAllowance.taperThreshold)}
             </p>
           )}
         </div>
