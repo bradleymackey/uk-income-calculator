@@ -123,7 +123,7 @@ export function ResultsBreakdown({
           highlight="green"
         />
         <Row
-          label="Monthly take-home"
+          label="Average monthly take-home"
           value={formatCurrency(result.netMonthlyPay)}
           bold
           highlight="green"
