@@ -115,8 +115,12 @@ export interface CalculationResult {
   totalDeductions: number;
   netAnnualPay: number;
   netMonthlyPay: number;
-  payeMonthlyPay: number | null;
-  vestMonthTotal: number | null;
+  payslip: {
+    normalMonth: number;
+    bonusMonth: number | null;
+    vestMonth: number | null;
+    bonusVestMonth: number | null;
+  } | null;
   effectiveRate: number;
   marginalRate: number;
 }
@@ -554,64 +558,85 @@ export function calculateTax(
   const netAnnualPay = totalGrossIncome - totalDeductions;
   const netMonthlyPay = netAnnualPay / 12;
 
-  // Monthly PAYE payslip: what a normal month looks like when no RSUs vest.
-  // Only includes what flows through payroll:
-  //   Cash in:  salary + bonus
-  //   Tax:      on salary + bonus + BIK (BIK coded into tax code, not cash)
-  //   NI:       on salary + bonus (not BIK)
-  //   Out:      workplace pension (deducted from payroll)
-  // Excludes:   RSUs (brokerage), SIPP (personal), BIK (not cash)
-  let payeMonthlyPay: number | null = null;
-  if (rsuVests > 0) {
-    const payeGross = grossSalary + bonus + taxableBenefits;
-    const payeNiable = grossSalary + bonus - salarySacrificeDeduction;
-    const payeAdjusted = payeGross - salarySacrificeDeduction;
-    const payePA = calculatePersonalAllowance(
-      payeAdjusted,
-      rules,
-      input.isBlind,
-    );
-    const payeTaxable = Math.max(0, payeAdjusted - payePA);
-    const payeIncomeTax = calculateBandedTax(payeTaxable, activeBands).reduce(
-      (sum, b) => sum + b.tax,
-      0,
-    );
-    const payeNI =
-      input.niCategory !== 'A'
-        ? 0
-        : calculateBandedTax(
-            payeNiable,
-            rules.nationalInsurance.employeeClass1.bands,
-          ).reduce((sum, b) => sum + b.tax, 0);
-    let payeUgLoan = 0;
-    if (input.undergraduatePlans.length > 0) {
-      const lowestThreshold = Math.min(
-        ...input.undergraduatePlans.map(
-          (p) => rules.studentLoans[p]?.threshold ?? Infinity,
-        ),
+  // Monthly PAYE payslip scenarios.
+  // Compute annual deductions for salary-only, then salary+bonus, to derive
+  // clean per-month figures. Only shown when bonus or RSUs make months differ.
+  let payslip: CalculationResult['payslip'] = null;
+  const hasBonus = bonus > 0;
+  const hasRsu = rsuVests > 0;
+  if (hasBonus || hasRsu) {
+    // Helper: compute annual PAYE net for a given gross (salary + optional bonus)
+    function payeAnnualNet(payeGrossSalary: number, payeBonus: number): number {
+      const payeGross = payeGrossSalary + payeBonus + taxableBenefits;
+      const payeNiable = payeGrossSalary + payeBonus - salarySacrificeDeduction;
+      const payeAdjusted = payeGross - salarySacrificeDeduction;
+      const payePA = calculatePersonalAllowance(
+        payeAdjusted,
+        rules,
+        input.isBlind,
       );
-      payeUgLoan = Math.max(0, (payeNiable - lowestThreshold) * 0.09);
+      const payeTaxable = Math.max(0, payeAdjusted - payePA);
+      const payeIT = calculateBandedTax(payeTaxable, activeBands).reduce(
+        (s, b) => s + b.tax,
+        0,
+      );
+      const payeNI =
+        input.niCategory !== 'A'
+          ? 0
+          : calculateBandedTax(
+              payeNiable,
+              rules.nationalInsurance.employeeClass1.bands,
+            ).reduce((s, b) => s + b.tax, 0);
+      let ugLoan = 0;
+      if (input.undergraduatePlans.length > 0) {
+        const lowest = Math.min(
+          ...input.undergraduatePlans.map(
+            (p) => rules.studentLoans[p]?.threshold ?? Infinity,
+          ),
+        );
+        ugLoan = Math.max(0, (payeNiable - lowest) * 0.09);
+      }
+      const slTotal =
+        ugLoan +
+        (input.hasPostgraduateLoan
+          ? calculateStudentLoanForPlan(payeNiable, 'postgraduate', rules)
+          : 0);
+      return (
+        payeGrossSalary +
+        payeBonus -
+        payeIT -
+        payeNI -
+        slTotal -
+        pensionContribution
+      );
     }
-    const payeStudentLoan =
-      payeUgLoan +
-      (input.hasPostgraduateLoan
-        ? calculateStudentLoanForPlan(payeNiable, 'postgraduate', rules)
-        : 0);
-    const payeAnnual =
-      grossSalary +
-      bonus -
-      payeIncomeTax -
-      payeNI -
-      payeStudentLoan -
-      pensionContribution;
-    payeMonthlyPay = payeAnnual / 12;
-  }
 
-  // Total received in a vest month: payslip + per-vest RSU net
-  const vestMonthTotal =
-    rsuPerVest && payeMonthlyPay !== null
-      ? payeMonthlyPay + rsuPerVest.netPerVest
+    // Salary-only annual net (no bonus, no RSUs)
+    const salaryOnlyNet = payeAnnualNet(grossSalary, 0);
+    const normalMonth = salaryOnlyNet / 12;
+
+    // Bonus is paid in a single month: salary+bonus annual net minus 11 normal months
+    const withBonusNet = payeAnnualNet(grossSalary, bonus);
+    const bonusMonth = hasBonus
+      ? withBonusNet - salaryOnlyNet + normalMonth
       : null;
+
+    // Vest month: normal payslip + net RSU per vest
+    const rsuNetPerVest = rsuPerVest
+      ? rsuWithholding
+        ? rsuPerVest.netPerVest
+        : rsuPerVest.grossPerVest
+      : 0;
+    const vestMonth = hasRsu ? normalMonth + rsuNetPerVest : null;
+
+    // Bonus + vest in same month
+    const bonusVestMonth =
+      hasBonus && hasRsu && bonusMonth !== null
+        ? bonusMonth + rsuNetPerVest
+        : null;
+
+    payslip = { normalMonth, bonusMonth, vestMonth, bonusVestMonth };
+  }
 
   // Effective and marginal tax rates — computed without pension/SIPP so they
   // reflect the underlying tax system and match the chart. Pension is a personal
@@ -705,8 +730,7 @@ export function calculateTax(
     totalDeductions,
     netAnnualPay,
     netMonthlyPay,
-    payeMonthlyPay,
-    vestMonthTotal,
+    payslip,
     effectiveRate,
     marginalRate,
   };

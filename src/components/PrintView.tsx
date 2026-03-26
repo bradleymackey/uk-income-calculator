@@ -453,18 +453,28 @@ export function PrintView({ input, result, taxRules }: PrintViewProps) {
       )}
 
       {/* Monthly Payslip */}
-      {result.payeMonthlyPay !== null && (
+      {result.payslip && (
         <Section title="Monthly Payslip">
           <Row
-            label="Non-vesting month"
-            value={formatCurrency(result.payeMonthlyPay)}
-            bold
+            label="Normal month"
+            value={formatCurrency(result.payslip.normalMonth)}
           />
-          {result.vestMonthTotal !== null && result.rsuPerVest && (
+          {result.payslip.bonusMonth !== null && (
+            <Row
+              label="Bonus month"
+              value={formatCurrency(result.payslip.bonusMonth)}
+            />
+          )}
+          {result.payslip.vestMonth !== null && result.rsuPerVest && (
             <Row
               label={`Vest month (${result.rsuPerVest.vestingPeriods}x/year)`}
-              value={formatCurrency(result.vestMonthTotal)}
-              bold
+              value={formatCurrency(result.payslip.vestMonth)}
+            />
+          )}
+          {result.payslip.bonusVestMonth !== null && result.rsuPerVest && (
+            <Row
+              label="Bonus + vest month"
+              value={formatCurrency(result.payslip.bonusVestMonth)}
             />
           )}
         </Section>

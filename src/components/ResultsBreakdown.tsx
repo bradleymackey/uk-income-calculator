@@ -113,21 +113,33 @@ export function ResultsBreakdown({
           bold
           highlight="green"
         />
-        {result.payeMonthlyPay !== null && (
+        {result.payslip && (
           <>
             <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
             <div className="text-sm">
               <Row
-                label="Monthly payslip (non-vest)"
-                value={formatCurrency(result.payeMonthlyPay)}
-                bold
+                label="Payslip (normal month)"
+                value={formatCurrency(result.payslip.normalMonth)}
                 highlight="green"
               />
-              {result.vestMonthTotal !== null && result.rsuPerVest && (
+              {result.payslip.bonusMonth !== null && (
                 <Row
-                  label={`Vest month total (${result.rsuPerVest.vestingPeriods}x/year)`}
-                  value={formatCurrency(result.vestMonthTotal)}
-                  bold
+                  label="Payslip (bonus month, 1x/year)"
+                  value={formatCurrency(result.payslip.bonusMonth)}
+                  highlight="green"
+                />
+              )}
+              {result.payslip.vestMonth !== null && result.rsuPerVest && (
+                <Row
+                  label={`Payslip (vest month, ${result.rsuPerVest.vestingPeriods}x/year)`}
+                  value={formatCurrency(result.payslip.vestMonth)}
+                  highlight="green"
+                />
+              )}
+              {result.payslip.bonusVestMonth !== null && result.rsuPerVest && (
+                <Row
+                  label="Payslip (bonus + vest, 1x/year)"
+                  value={formatCurrency(result.payslip.bonusVestMonth)}
                   highlight="green"
                 />
               )}

@@ -381,14 +381,14 @@ describe('calculateTax', () => {
     // Without RSUs: tax on salary alone
     const withoutRsus = calculateTax(makeInput({ grossSalary: 50000 }), rules);
 
-    // PAYE monthly should match what you'd get with salary only
-    expect(withRsus.payeMonthlyPay).not.toBeNull();
-    expect(withRsus.payeMonthlyPay).toBeCloseTo(
+    // Normal month payslip should match salary-only net / 12
+    expect(withRsus.payslip).not.toBeNull();
+    expect(withRsus.payslip!.normalMonth).toBeCloseTo(
       withoutRsus.netAnnualPay / 12,
       2,
     );
-    // No RSUs → no separate PAYE figure needed
-    expect(withoutRsus.payeMonthlyPay).toBeNull();
+    // No RSUs or bonus → no payslip breakdown needed
+    expect(withoutRsus.payslip).toBeNull();
   });
 
   it('SIPP does not affect monthly payslip', () => {
@@ -409,10 +409,13 @@ describe('calculateTax', () => {
     );
 
     // SIPP is personal, not via payroll — payslip should be identical
-    expect(withSipp.payeMonthlyPay).toBeCloseTo(withoutSipp.payeMonthlyPay!, 2);
+    expect(withSipp.payslip!.normalMonth).toBeCloseTo(
+      withoutSipp.payslip!.normalMonth,
+      2,
+    );
   });
 
-  it('vest month total = payslip + per-vest RSU net', () => {
+  it('vest month total = normal month + per-vest RSU net', () => {
     const result = calculateTax(
       makeInput({
         grossSalary: 50000,
@@ -424,8 +427,8 @@ describe('calculateTax', () => {
     );
 
     const perVestNet = (20000 * 0.53) / 4;
-    expect(result.vestMonthTotal).toBeCloseTo(
-      result.payeMonthlyPay! + perVestNet,
+    expect(result.payslip!.vestMonth).toBeCloseTo(
+      result.payslip!.normalMonth + perVestNet,
       2,
     );
   });
@@ -448,10 +451,27 @@ describe('calculateTax', () => {
       rules,
     );
 
-    expect(withholding.payeMonthlyPay).toBeCloseTo(
-      noWithholding.payeMonthlyPay!,
+    expect(withholding.payslip!.normalMonth).toBeCloseTo(
+      noWithholding.payslip!.normalMonth,
       2,
     );
+  });
+
+  it('bonus month payslip includes full bonus after tax', () => {
+    const result = calculateTax(
+      makeInput({ grossSalary: 50000, bonus: 10000 }),
+      rules,
+    );
+
+    expect(result.payslip).not.toBeNull();
+    expect(result.payslip!.bonusMonth).not.toBeNull();
+    // Bonus month should be higher than normal month
+    expect(result.payslip!.bonusMonth!).toBeGreaterThan(
+      result.payslip!.normalMonth,
+    );
+    // No RSUs → no vest entries
+    expect(result.payslip!.vestMonth).toBeNull();
+    expect(result.payslip!.bonusVestMonth).toBeNull();
   });
 
   it('handles RSU vests', () => {
