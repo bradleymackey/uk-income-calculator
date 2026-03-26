@@ -65,7 +65,7 @@ function searchToInput(search: SearchParams): {
       taxableBenefits: search.bik ?? 0,
       rsuVests: search.rsu ?? 0,
       rsuTaxWithheld: search.rsuWithheld ?? false,
-      rsuVestingPeriodsPerYear: search.rsuVests ?? 4,
+      rsuVestingPeriodsPerYear: search.rsuVests != null ? search.rsuVests : 4,
       pensionContribution: {
         type: hasPensionFixed ? 'fixed' : 'percentage',
         value: hasPensionFixed
@@ -155,7 +155,7 @@ export const Route = createFileRoute('/')({
         search.rsuWithheld === true ||
         search.rsuWithheld === 'true' ||
         undefined,
-      rsuVests: search.rsuVests ? Number(search.rsuVests) : undefined,
+      rsuVests: search.rsuVests != null ? Number(search.rsuVests) : undefined,
       pensionPct: search.pensionPct ? Number(search.pensionPct) : undefined,
       pensionFixed:
         search.pensionFixed != null ? Number(search.pensionFixed) : undefined,
