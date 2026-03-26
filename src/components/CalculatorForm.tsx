@@ -393,7 +393,7 @@ export function CalculatorForm({
                   value={input.bonus || ''}
                   onChange={(v) => update({ bonus: parseFloat(v) || 0 })}
                   prefix="£"
-                  tooltip="Total expected bonus for the tax year. Taxed as regular income via PAYE."
+                  tooltip="Total expected bonus for the tax year. Taxed as regular income via PAYE. Assumed to be paid in a single month for payslip estimates."
                 />
               </OptionalCard>
             )}
