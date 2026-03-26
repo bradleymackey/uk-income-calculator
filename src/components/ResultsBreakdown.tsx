@@ -172,8 +172,6 @@ export function ResultsBreakdown({
             return null;
           })()}
         </div>
-        <TaxRateChart input={input} result={result} taxRules={taxRules} />
-        <IncomeBreakdownChart result={result} />
         {result.payeMonthlyPay !== null && (
           <>
             <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
@@ -208,6 +206,8 @@ export function ResultsBreakdown({
             </div>
           </>
         )}
+        <TaxRateChart input={input} result={result} taxRules={taxRules} />
+        <IncomeBreakdownChart result={result} />
       </div>
 
       {/* Income */}
