@@ -293,7 +293,7 @@ function HomePage() {
               </svg>
             </button>
           </span>
-          <div className="flex items-center gap-3 text-sm print:hidden">
+          <div className="flex flex-col items-end gap-1 text-sm print:hidden">
             <select
               value={taxYear}
               onChange={(e) => handleYearChange(e.target.value)}
