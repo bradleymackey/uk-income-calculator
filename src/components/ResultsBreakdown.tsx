@@ -133,27 +133,27 @@ export function ResultsBreakdown({
             <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
             <div className="text-sm">
               <Row
-                label="Payslip (normal month)"
+                label="Take home (normal month)"
                 value={formatCurrency(result.payslip.normalMonth)}
                 highlight="green"
               />
               {result.payslip.bonusMonth !== null && (
                 <Row
-                  label="Payslip (bonus month)"
+                  label="Take home (bonus month)"
                   value={formatCurrency(result.payslip.bonusMonth)}
                   highlight="green"
                 />
               )}
               {result.payslip.vestMonth !== null && result.rsuPerVest && (
                 <Row
-                  label="Payslip (vest month)"
+                  label="Take home (vest month)"
                   value={formatCurrency(result.payslip.vestMonth)}
                   highlight="green"
                 />
               )}
               {result.payslip.bonusVestMonth !== null && result.rsuPerVest && (
                 <Row
-                  label="Payslip (bonus + vest)"
+                  label="Take home (bonus + vest)"
                   value={formatCurrency(result.payslip.bonusVestMonth)}
                   highlight="green"
                 />
