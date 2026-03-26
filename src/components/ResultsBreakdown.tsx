@@ -124,21 +124,21 @@ export function ResultsBreakdown({
               />
               {result.payslip.bonusMonth !== null && (
                 <Row
-                  label="Payslip (bonus month, 1x/year)"
+                  label="Payslip (bonus month)"
                   value={formatCurrency(result.payslip.bonusMonth)}
                   highlight="green"
                 />
               )}
               {result.payslip.vestMonth !== null && result.rsuPerVest && (
                 <Row
-                  label={`Payslip (vest month, ${result.rsuPerVest.vestingPeriods}x/year)`}
+                  label="Payslip (vest month)"
                   value={formatCurrency(result.payslip.vestMonth)}
                   highlight="green"
                 />
               )}
               {result.payslip.bonusVestMonth !== null && result.rsuPerVest && (
                 <Row
-                  label="Payslip (bonus + vest, 1x/year)"
+                  label="Payslip (bonus + vest)"
                   value={formatCurrency(result.payslip.bonusVestMonth)}
                   highlight="green"
                 />
