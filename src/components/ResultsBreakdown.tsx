@@ -113,6 +113,40 @@ export function ResultsBreakdown({
           bold
           highlight="green"
         />
+        {result.payeMonthlyPay !== null && (
+          <>
+            <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
+            <p className="mb-1 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+              Monthly payslip
+            </p>
+            <div className="text-sm">
+              <Row
+                label="Monthly payslip"
+                value={formatCurrency(result.payeMonthlyPay)}
+                bold
+                highlight="green"
+              />
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Non-vesting month — tax calculated on salary only
+              </p>
+              {result.vestMonthTotal !== null && result.rsuPerVest && (
+                <>
+                  <div className="my-1 border-t border-blue-200 dark:border-blue-800" />
+                  <Row
+                    label={`Vest month total (${result.rsuPerVest.vestingPeriods}x/year)`}
+                    value={formatCurrency(result.vestMonthTotal)}
+                    bold
+                    highlight="green"
+                  />
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                    Payslip + {formatCurrency(result.rsuPerVest.netPerVest)} RSU
+                    net per vest
+                  </p>
+                </>
+              )}
+            </div>
+          </>
+        )}
         <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
         <div className="text-sm">
           <Row
@@ -172,40 +206,6 @@ export function ResultsBreakdown({
             return null;
           })()}
         </div>
-        {result.payeMonthlyPay !== null && (
-          <>
-            <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
-            <p className="mb-1 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-              Monthly payslip
-            </p>
-            <div className="text-sm">
-              <Row
-                label="Monthly payslip"
-                value={formatCurrency(result.payeMonthlyPay)}
-                bold
-                highlight="green"
-              />
-              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                Non-vesting month — tax calculated on salary only
-              </p>
-              {result.vestMonthTotal !== null && result.rsuPerVest && (
-                <>
-                  <div className="my-1 border-t border-blue-200 dark:border-blue-800" />
-                  <Row
-                    label={`Vest month total (${result.rsuPerVest.vestingPeriods}x/year)`}
-                    value={formatCurrency(result.vestMonthTotal)}
-                    bold
-                    highlight="green"
-                  />
-                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Payslip + {formatCurrency(result.rsuPerVest.netPerVest)} RSU
-                    net per vest
-                  </p>
-                </>
-              )}
-            </div>
-          </>
-        )}
         <TaxRateChart input={input} result={result} taxRules={taxRules} />
         <IncomeBreakdownChart result={result} />
       </div>
