@@ -211,7 +211,7 @@ export function ResultsBreakdown({
       </div>
 
       {/* Income */}
-      <section>
+      <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Income
         </h3>
@@ -240,7 +240,7 @@ export function ResultsBreakdown({
 
       {/* RSU Breakdown */}
       {result.rsuVests > 0 && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             RSUs
           </h3>
@@ -278,7 +278,7 @@ export function ResultsBreakdown({
 
       {/* RSU Withholding */}
       {result.rsuWithholding && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             RSU Tax Withholding
           </h3>
@@ -318,7 +318,7 @@ export function ResultsBreakdown({
         result.employerPensionContribution > 0 ||
         result.employerNiPassback > 0 ||
         result.sippContribution > 0) && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Pension Contributions
           </h3>
@@ -441,7 +441,7 @@ export function ResultsBreakdown({
       )}
 
       {/* Personal Allowance */}
-      <section>
+      <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Personal Allowance
         </h3>
@@ -466,7 +466,7 @@ export function ResultsBreakdown({
       </section>
 
       {/* Income Tax */}
-      <section>
+      <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Income Tax
         </h3>
@@ -482,7 +482,7 @@ export function ResultsBreakdown({
       </section>
 
       {/* National Insurance */}
-      <section>
+      <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           National Insurance
         </h3>
@@ -499,7 +499,7 @@ export function ResultsBreakdown({
 
       {/* Class 4 NI */}
       {result.class4Ni > 0 && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Class 4 National Insurance
           </h3>
@@ -517,7 +517,7 @@ export function ResultsBreakdown({
 
       {/* Child Benefit */}
       {result.childBenefit && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Child Benefit
           </h3>
@@ -570,7 +570,7 @@ export function ResultsBreakdown({
 
       {/* Student Loan */}
       {result.studentLoanRepayment > 0 && (
-        <section>
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Student Loan
           </h3>
