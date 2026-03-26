@@ -174,41 +174,6 @@ export function ResultsBreakdown({
         </div>
         <TaxRateChart input={input} result={result} taxRules={taxRules} />
         <IncomeBreakdownChart result={result} />
-        {result.rsuVests > 0 && (
-          <>
-            <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
-            <p className="mb-1 text-xs font-medium text-blue-700">RSUs</p>
-            <div className="text-sm">
-              <Row
-                label="Annual RSU gross"
-                value={formatCurrency(result.rsuVests)}
-              />
-              {result.rsuWithholding && (
-                <Row
-                  label="Annual net received"
-                  value={formatCurrency(result.rsuWithholding.netRsuValue)}
-                  highlight="green"
-                />
-              )}
-              {result.rsuPerVest && (
-                <>
-                  <div className="my-1 border-t border-blue-200 dark:border-blue-800" />
-                  <Row
-                    label={`Per vest (${result.rsuPerVest.vestingPeriods}x/year)`}
-                    value={formatCurrency(result.rsuPerVest.grossPerVest)}
-                  />
-                  {result.rsuWithholding && (
-                    <Row
-                      label="Net per vest"
-                      value={formatCurrency(result.rsuPerVest.netPerVest)}
-                      highlight="green"
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </>
-        )}
         {result.payeMonthlyPay !== null && (
           <>
             <div className="my-2 border-t border-blue-200 dark:border-blue-800" />
@@ -272,6 +237,44 @@ export function ResultsBreakdown({
           )}
         </div>
       </section>
+
+      {/* RSU Breakdown */}
+      {result.rsuVests > 0 && (
+        <section>
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            RSUs
+          </h3>
+          <div className="text-sm">
+            <Row
+              label="Annual RSU gross"
+              value={formatCurrency(result.rsuVests)}
+            />
+            {result.rsuWithholding && (
+              <Row
+                label="Annual net received"
+                value={formatCurrency(result.rsuWithholding.netRsuValue)}
+                highlight="green"
+              />
+            )}
+            {result.rsuPerVest && (
+              <>
+                <div className="my-1 border-t border-neutral-200 dark:border-neutral-700" />
+                <Row
+                  label={`Per vest (${result.rsuPerVest.vestingPeriods}x/year)`}
+                  value={formatCurrency(result.rsuPerVest.grossPerVest)}
+                />
+                {result.rsuWithholding && (
+                  <Row
+                    label="Net per vest"
+                    value={formatCurrency(result.rsuPerVest.netPerVest)}
+                    highlight="green"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* RSU Withholding */}
       {result.rsuWithholding && (
