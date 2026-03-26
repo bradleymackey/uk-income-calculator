@@ -38,8 +38,12 @@ function Row({
 
 function BandTable({
   bands,
+  totalLabel,
+  total,
 }: {
   bands: { name: string; amount: number; rate: number; tax: number }[];
+  totalLabel: string;
+  total: number;
 }) {
   if (bands.length === 0) return null;
 
@@ -74,6 +78,19 @@ function BandTable({
           </tr>
         ))}
       </tbody>
+      <tfoot>
+        <tr className="border-t border-neutral-200 dark:border-neutral-700">
+          <td
+            colSpan={3}
+            className="py-1 font-semibold text-neutral-900 dark:text-neutral-100"
+          >
+            {totalLabel}
+          </td>
+          <td className="py-1 text-right font-semibold text-red-600 dark:text-red-400">
+            -{formatCurrency(total)}
+          </td>
+        </tr>
+      </tfoot>
     </table>
   );
 }
@@ -467,15 +484,11 @@ export function ResultsBreakdown({
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Income Tax
         </h3>
-        <BandTable bands={result.incomeTaxBands} />
-        <div className="mt-1 text-sm">
-          <Row
-            label="Total income tax"
-            value={`-${formatCurrency(result.incomeTax)}`}
-            bold
-            highlight="red"
-          />
-        </div>
+        <BandTable
+          bands={result.incomeTaxBands}
+          totalLabel="Total income tax"
+          total={result.incomeTax}
+        />
       </section>
 
       {/* National Insurance */}
@@ -483,15 +496,11 @@ export function ResultsBreakdown({
         <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           National Insurance
         </h3>
-        <BandTable bands={result.niBands} />
-        <div className="mt-1 text-sm">
-          <Row
-            label="Total NI"
-            value={`-${formatCurrency(result.nationalInsurance)}`}
-            bold
-            highlight="red"
-          />
-        </div>
+        <BandTable
+          bands={result.niBands}
+          totalLabel="Total NI"
+          total={result.nationalInsurance}
+        />
       </section>
 
       {/* Class 4 NI */}
@@ -500,15 +509,11 @@ export function ResultsBreakdown({
           <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Class 4 National Insurance
           </h3>
-          <BandTable bands={result.class4NiBands} />
-          <div className="mt-1 text-sm">
-            <Row
-              label="Total Class 4 NI"
-              value={`-${formatCurrency(result.class4Ni)}`}
-              bold
-              highlight="red"
-            />
-          </div>
+          <BandTable
+            bands={result.class4NiBands}
+            totalLabel="Total Class 4 NI"
+            total={result.class4Ni}
+          />
         </section>
       )}
 
