@@ -90,7 +90,18 @@ const taxRulesMap: Record<string, TaxRules> = {
   '2026-27': taxRules202627 as TaxRules,
 };
 
-export const DEFAULT_TAX_YEAR = '2026-27';
+function getCurrentTaxYear(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed
+  const day = now.getDate();
+  // UK tax year starts 6 April
+  const startYear = month > 3 || (month === 3 && day >= 6) ? year : year - 1;
+  const key = `${startYear}-${String(startYear + 1).slice(2)}`;
+  return key in taxRulesMap ? key : Object.keys(taxRulesMap).pop()!;
+}
+
+export const DEFAULT_TAX_YEAR = getCurrentTaxYear();
 
 export function getTaxRules(taxYear: string = DEFAULT_TAX_YEAR): TaxRules {
   const rules = taxRulesMap[taxYear];
