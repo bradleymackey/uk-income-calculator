@@ -36,6 +36,7 @@ function makeInput(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
     employerNiPassbackPercent: 0,
     otherSalarySacrifice: 0,
     selfEmploymentIncome: 0,
+    selfEmploymentInsideIR35: false,
     sippContribution: 0,
     sippInputType: 'gross',
     numberOfChildren: 0,

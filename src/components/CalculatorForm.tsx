@@ -193,7 +193,10 @@ export function CalculatorForm({
         employerPensionContribution: { type: 'percentage', value: 0 },
       },
       sipp: { sippContribution: 0, sippInputType: 'gross' as const },
-      selfEmployment: { selfEmploymentIncome: 0 },
+      selfEmployment: {
+        selfEmploymentIncome: 0,
+        selfEmploymentInsideIR35: false,
+      },
       childBenefit: { numberOfChildren: 0 },
       studentLoan: {
         undergraduatePlans: [],
@@ -518,8 +521,34 @@ export function CalculatorForm({
                 update({ selfEmploymentIncome: parseFloat(v) || 0 })
               }
               prefix="£"
-              tooltip="Net profit from self-employment after allowable expenses. Taxed as income and subject to Class 4 NI (not Class 1)."
+              tooltip="Net profit from self-employment after allowable expenses."
             />
+            {input.selfEmploymentIncome > 0 && (
+              <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                <input
+                  type="checkbox"
+                  checked={input.selfEmploymentInsideIR35}
+                  onChange={(e) =>
+                    update({ selfEmploymentInsideIR35: e.target.checked })
+                  }
+                  className="rounded"
+                />
+                Inside IR35 (off-payroll)
+                <Tooltip content="If your contract is inside IR35, your income is treated like employment for NI purposes — you pay Class 1 NI instead of the lower Class 4 NI rates.">
+                  <svg
+                    className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+                  </svg>
+                </Tooltip>
+              </label>
+            )}
             {input.selfEmploymentIncome > 0 &&
               input.selfEmploymentIncome <=
                 taxRules.selfEmployment.tradingAllowance && (

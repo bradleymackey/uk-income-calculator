@@ -36,6 +36,7 @@ export interface CalculatorInput {
   sippContribution: number;
   sippInputType: 'gross' | 'net';
   selfEmploymentIncome: number;
+  selfEmploymentInsideIR35: boolean;
   numberOfChildren: number;
   undergraduatePlans: Exclude<UndergraduatePlanId, 'none'>[];
   hasPostgraduateLoan: boolean;
@@ -257,7 +258,11 @@ function totalDeductionsAtSalary(
     input.taxableBenefits +
     input.rsuVests +
     input.selfEmploymentIncome;
-  const niable = salary + input.bonus + input.rsuVests - ssDeduction;
+  const ir35SE =
+    input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35
+      ? input.selfEmploymentIncome
+      : 0;
+  const niable = salary + input.bonus + input.rsuVests - ssDeduction + ir35SE;
   const adjusted = gross - ssDeduction - sipp;
 
   const pa = calculatePersonalAllowance(adjusted, rules, input.isBlind);
@@ -277,14 +282,15 @@ function totalDeductionsAtSalary(
         ).reduce((s, b) => s + b.tax, 0);
 
   const class4 =
-    input.selfEmploymentIncome > 0
+    input.selfEmploymentIncome > 0 && !input.selfEmploymentInsideIR35
       ? calculateBandedTax(
           input.selfEmploymentIncome,
           rules.nationalInsurance.class4.bands,
         ).reduce((s, b) => s + b.tax, 0)
       : 0;
 
-  const studentLoanBase = niable + input.selfEmploymentIncome;
+  const studentLoanBase =
+    niable + (input.selfEmploymentInsideIR35 ? 0 : input.selfEmploymentIncome);
   let studentLoan = 0;
   if (input.undergraduatePlans.length > 0) {
     const lowestThreshold = Math.min(
@@ -424,8 +430,13 @@ export function calculateTax(
     grossSalary - pensionSacrifice,
   );
   const salarySacrificeDeduction = pensionSacrifice + otherSacrifice;
+  // When inside IR35, self-employment income is treated as employment for NI
+  const ir35Income =
+    input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35
+      ? input.selfEmploymentIncome
+      : 0;
   const niableIncome =
-    grossSalary + bonus + rsuVests - salarySacrificeDeduction;
+    grossSalary + bonus + rsuVests - salarySacrificeDeduction + ir35Income;
 
   // 4. Adjusted net income for income tax
   // Salary sacrifice reduces gross, SIPP reduces taxable income
@@ -457,9 +468,10 @@ export function calculateTax(
         );
   const nationalInsurance = niBands.reduce((sum, b) => sum + b.tax, 0);
 
-  // 8b. Class 4 NI on self-employment profits
+  // 8b. Class 4 NI on self-employment profits (skipped when inside IR35,
+  // since Class 1 NI is already applied above)
   const class4NiBands =
-    input.selfEmploymentIncome > 0
+    input.selfEmploymentIncome > 0 && !input.selfEmploymentInsideIR35
       ? calculateBandedTax(
           input.selfEmploymentIncome,
           rules.nationalInsurance.class4.bands,
@@ -470,7 +482,10 @@ export function calculateTax(
   // 9. Student loans (based on total income: employment + self-employment)
   // Multiple undergraduate plans use a single 9% deduction on the lowest threshold.
   // Postgraduate loan is always separate at 6%.
-  const studentLoanIncome = niableIncome + input.selfEmploymentIncome;
+  // When inside IR35, self-employment income is already in niableIncome
+  const studentLoanIncome =
+    niableIncome +
+    (input.selfEmploymentInsideIR35 ? 0 : input.selfEmploymentIncome);
   let undergraduateLoanRepayment = 0;
   if (input.undergraduatePlans.length > 0) {
     const lowestThreshold = Math.min(
