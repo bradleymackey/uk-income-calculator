@@ -55,17 +55,20 @@ function BandTable({
       </thead>
       <tbody>
         {bands.map((band) => (
-          <tr key={band.name}>
-            <td className="py-0.5 text-neutral-600 dark:text-neutral-400">
+          <tr
+            key={band.name}
+            className="border-t border-neutral-100 dark:border-neutral-800"
+          >
+            <td className="py-1 text-neutral-600 dark:text-neutral-400">
               {band.name}
             </td>
-            <td className="py-0.5 text-right text-neutral-600 dark:text-neutral-400">
+            <td className="py-1 text-right text-neutral-600 dark:text-neutral-400">
               {formatCurrency(band.amount)}
             </td>
-            <td className="py-0.5 text-right text-neutral-600 dark:text-neutral-400">
+            <td className="py-1 text-right text-neutral-600 dark:text-neutral-400">
               {formatPercentage(band.rate)}
             </td>
-            <td className="py-0.5 text-right text-neutral-900 dark:text-neutral-100">
+            <td className="py-1 text-right text-neutral-900 dark:text-neutral-100">
               {formatCurrency(band.tax)}
             </td>
           </tr>
