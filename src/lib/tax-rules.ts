@@ -71,6 +71,11 @@ export interface TaxRules {
       bands: TaxBand[];
     };
   };
+  selfEmployment: {
+    tradingAllowance: number;
+    vatThreshold: number;
+    vatRate: number;
+  };
   childBenefit: ChildBenefitRules;
   studentLoans: Record<string, StudentLoanPlan>;
 }

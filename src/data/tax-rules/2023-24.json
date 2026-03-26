@@ -44,6 +44,11 @@
       ]
     }
   },
+  "selfEmployment": {
+    "tradingAllowance": 1000,
+    "vatThreshold": 85000,
+    "vatRate": 0.2
+  },
   "childBenefit": {
     "weeklyRateFirstChild": 24.0,
     "weeklyRateAdditionalChild": 15.9,

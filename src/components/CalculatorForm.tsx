@@ -520,6 +520,27 @@ export function CalculatorForm({
               prefix="£"
               tooltip="Net profit from self-employment after allowable expenses. Taxed as income and subject to Class 4 NI (not Class 1)."
             />
+            {input.selfEmploymentIncome > 0 &&
+              input.selfEmploymentIncome <=
+                taxRules.selfEmployment.tradingAllowance && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Below the{' '}
+                  {formatCurrency(taxRules.selfEmployment.tradingAllowance)}{' '}
+                  trading allowance — no tax due on this income
+                </p>
+              )}
+            {input.selfEmploymentIncome >=
+              taxRules.selfEmployment.vatThreshold && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Exceeds the{' '}
+                {formatCurrency(taxRules.selfEmployment.vatThreshold)} VAT
+                registration threshold — you must register for VAT. Estimated
+                VAT to collect:{' '}
+                {formatCurrency(
+                  input.selfEmploymentIncome * taxRules.selfEmployment.vatRate,
+                )}
+              </p>
+            )}
           </OptionalCard>
         </section>
       )}
