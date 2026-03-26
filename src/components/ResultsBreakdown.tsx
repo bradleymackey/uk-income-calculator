@@ -44,39 +44,34 @@ function BandTable({
   if (bands.length === 0) return null;
 
   return (
-    <div className="mt-1 overflow-hidden rounded border border-neutral-200 dark:border-neutral-700">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-neutral-50 text-left text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-            <th className="px-3 py-1.5">Band</th>
-            <th className="px-3 py-1.5 text-right">Amount</th>
-            <th className="px-3 py-1.5 text-right">Rate</th>
-            <th className="px-3 py-1.5 text-right">Tax</th>
+    <table className="mt-1 w-full text-sm">
+      <thead>
+        <tr className="text-left text-xs text-neutral-500 dark:text-neutral-400">
+          <th className="pb-1 font-medium">Band</th>
+          <th className="pb-1 text-right font-medium">Amount</th>
+          <th className="pb-1 text-right font-medium">Rate</th>
+          <th className="pb-1 text-right font-medium">Tax</th>
+        </tr>
+      </thead>
+      <tbody>
+        {bands.map((band) => (
+          <tr key={band.name}>
+            <td className="py-0.5 text-neutral-600 dark:text-neutral-400">
+              {band.name}
+            </td>
+            <td className="py-0.5 text-right text-neutral-600 dark:text-neutral-400">
+              {formatCurrency(band.amount)}
+            </td>
+            <td className="py-0.5 text-right text-neutral-600 dark:text-neutral-400">
+              {formatPercentage(band.rate)}
+            </td>
+            <td className="py-0.5 text-right text-neutral-900 dark:text-neutral-100">
+              {formatCurrency(band.tax)}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {bands.map((band) => (
-            <tr
-              key={band.name}
-              className="border-t border-neutral-100 dark:border-neutral-700"
-            >
-              <td className="px-3 py-1.5 text-neutral-700 dark:text-neutral-300">
-                {band.name}
-              </td>
-              <td className="px-3 py-1.5 text-right text-neutral-700 dark:text-neutral-300">
-                {formatCurrency(band.amount)}
-              </td>
-              <td className="px-3 py-1.5 text-right text-neutral-700 dark:text-neutral-300">
-                {formatPercentage(band.rate)}
-              </td>
-              <td className="px-3 py-1.5 text-right text-neutral-900 dark:text-neutral-100">
-                {formatCurrency(band.tax)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
