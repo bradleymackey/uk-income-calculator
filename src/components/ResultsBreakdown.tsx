@@ -503,6 +503,27 @@ export function ResultsBreakdown({
         />
       </section>
 
+      {/* IR35 Employer NI */}
+      {result.ir35EmployerNi > 0 && (
+        <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">
+          <h3 className="mb-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            IR35 Employer NI
+          </h3>
+          <div className="text-sm">
+            <Row
+              label="Employer NI (inside IR35)"
+              value={`-${formatCurrency(result.ir35EmployerNi)}`}
+              bold
+              highlight="red"
+            />
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Deducted from your contract income before deemed salary is
+              calculated
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Class 4 NI */}
       {result.class4Ni > 0 && (
         <section className="rounded-lg p-4 ring-1 ring-neutral-200 dark:ring-neutral-800">

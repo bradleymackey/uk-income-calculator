@@ -88,6 +88,8 @@ export interface CalculationResult {
   class4NiBands: BandBreakdown[];
   class4Ni: number;
 
+  ir35EmployerNi: number;
+
   undergraduateLoanRepayment: number;
   postgraduateLoanRepayment: number;
   studentLoanRepayment: number;
@@ -252,17 +254,27 @@ function totalDeductionsAtSalary(
       ? input.sippContribution / 0.8
       : input.sippContribution;
 
+  // IR35: compute deemed salary after employer NI
+  let ir35Deemed = 0;
+  let ir35ErNi = 0;
+  if (input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35) {
+    const { secondaryThreshold, rate } = rules.nationalInsurance.employerClass1;
+    if (input.selfEmploymentIncome <= secondaryThreshold) {
+      ir35Deemed = input.selfEmploymentIncome;
+    } else {
+      ir35Deemed =
+        (input.selfEmploymentIncome + secondaryThreshold * rate) / (1 + rate);
+    }
+    ir35ErNi = input.selfEmploymentIncome - ir35Deemed;
+  }
+  const seForTax = input.selfEmploymentInsideIR35
+    ? ir35Deemed
+    : input.selfEmploymentIncome;
+
   const gross =
-    salary +
-    input.bonus +
-    input.taxableBenefits +
-    input.rsuVests +
-    input.selfEmploymentIncome;
-  const ir35SE =
-    input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35
-      ? input.selfEmploymentIncome
-      : 0;
-  const niable = salary + input.bonus + input.rsuVests - ssDeduction + ir35SE;
+    salary + input.bonus + input.taxableBenefits + input.rsuVests + seForTax;
+  const niable =
+    salary + input.bonus + input.rsuVests - ssDeduction + ir35Deemed;
   const adjusted = gross - ssDeduction - sipp;
 
   const pa = calculatePersonalAllowance(adjusted, rules, input.isBlind);
@@ -324,7 +336,7 @@ function totalDeductionsAtSalary(
     }
   }
 
-  return tax + ni + class4 + studentLoan + hicbc;
+  return tax + ni + class4 + ir35ErNi + studentLoan + hicbc;
 }
 
 function computeMarginalRate(
@@ -411,7 +423,23 @@ export function calculateTax(
       ? input.sippContribution / 0.8
       : input.sippContribution;
 
-  // 2. Total gross income (includes self-employment profits)
+  // 2. IR35: when inside, employer NI comes out of contract income first
+  let ir35EmployerNi = 0;
+  let ir35DeemedSalary = 0;
+  if (input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35) {
+    const { secondaryThreshold, rate } = rules.nationalInsurance.employerClass1;
+    // Solve: salary + max(0, salary - threshold) * rate = contractIncome
+    if (input.selfEmploymentIncome <= secondaryThreshold) {
+      ir35DeemedSalary = input.selfEmploymentIncome;
+    } else {
+      ir35DeemedSalary =
+        (input.selfEmploymentIncome + secondaryThreshold * rate) / (1 + rate);
+    }
+    ir35EmployerNi = input.selfEmploymentIncome - ir35DeemedSalary;
+  }
+
+  // 2b. Total gross income — always uses full contract income (employer NI shown
+  // as a separate deduction when inside IR35)
   const totalGrossIncome =
     grossSalary +
     bonus +
@@ -430,18 +458,22 @@ export function calculateTax(
     grossSalary - pensionSacrifice,
   );
   const salarySacrificeDeduction = pensionSacrifice + otherSacrifice;
-  // When inside IR35, self-employment income is treated as employment for NI
-  const ir35Income =
-    input.selfEmploymentIncome > 0 && input.selfEmploymentInsideIR35
-      ? input.selfEmploymentIncome
-      : 0;
+  // When inside IR35, deemed salary is treated as employment for Class 1 NI
   const niableIncome =
-    grossSalary + bonus + rsuVests - salarySacrificeDeduction + ir35Income;
+    grossSalary +
+    bonus +
+    rsuVests -
+    salarySacrificeDeduction +
+    ir35DeemedSalary;
 
   // 4. Adjusted net income for income tax
   // Salary sacrifice reduces gross, SIPP reduces taxable income
+  // IR35 employer NI reduces the taxable portion of contract income
   const adjustedNetIncome =
-    totalGrossIncome - salarySacrificeDeduction - sippContribution;
+    totalGrossIncome -
+    salarySacrificeDeduction -
+    sippContribution -
+    ir35EmployerNi;
 
   // 5. Personal allowance (with tapering + BPA)
   const personalAllowance = calculatePersonalAllowance(
@@ -565,6 +597,7 @@ export function calculateTax(
     incomeTax +
     nationalInsurance +
     class4Ni +
+    ir35EmployerNi +
     studentLoanRepayment +
     pensionContribution +
     otherSacrifice +
@@ -731,6 +764,7 @@ export function calculateTax(
     nationalInsurance,
     class4NiBands,
     class4Ni,
+    ir35EmployerNi,
     undergraduateLoanRepayment,
     postgraduateLoanRepayment,
     studentLoanRepayment,
