@@ -392,15 +392,46 @@ export function ResultsBreakdown({
               </>
             )}
             {result.totalPensionContributions > 0 && (
-              <>
-                <div className="mt-2 border-t border-neutral-200 dark:border-neutral-700 pt-2">
-                  <Row
-                    label="Total going into pension"
-                    value={formatCurrency(result.totalPensionContributions)}
-                    bold
-                  />
-                </div>
-              </>
+              <div className="mt-2 border-t border-neutral-200 dark:border-neutral-700 pt-2">
+                <Row
+                  label="Total going into pension"
+                  value={formatCurrency(result.totalPensionContributions)}
+                  bold
+                />
+                <Row
+                  label={
+                    result.pensionAnnualAllowance.tapered
+                      ? 'Annual allowance (tapered)'
+                      : 'Annual allowance'
+                  }
+                  value={formatCurrency(
+                    result.pensionAnnualAllowance.allowance,
+                  )}
+                />
+                {result.pensionAnnualAllowance.tapered && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Reduced from{' '}
+                    {formatCurrency(taxRules.pensionAnnualAllowance.amount)} due
+                    to adjusted income exceeding{' '}
+                    {formatCurrency(
+                      taxRules.pensionAnnualAllowance.taperThreshold,
+                    )}
+                  </p>
+                )}
+                {result.pensionAnnualAllowance.excess > 0 && (
+                  <div className="mt-1.5 rounded border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/30">
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+                      Annual allowance exceeded by{' '}
+                      {formatCurrency(result.pensionAnnualAllowance.excess)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
+                      The excess is added to your taxable income and charged at
+                      your marginal rate. You may be able to use unused
+                      allowance carried forward from the previous 3 tax years.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </section>

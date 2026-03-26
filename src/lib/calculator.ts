@@ -99,6 +99,13 @@ export interface CalculationResult {
     effectiveCost: number;
   };
 
+  pensionAnnualAllowance: {
+    allowance: number;
+    tapered: boolean;
+    totalContributions: number;
+    excess: number;
+  };
+
   childBenefit: {
     annualAmount: number;
     hicbcCharge: number;
@@ -636,6 +643,30 @@ export function calculateTax(
     rules,
   );
 
+  // 13. Pension annual allowance tapering
+  // "Adjusted income" for AA = total income + ALL pension inputs (including employer)
+  const totalPensionContributions =
+    pensionContribution +
+    employerPensionContribution +
+    employerNiPassback +
+    sippContribution;
+  const aaAdjustedIncome =
+    totalGrossIncome + employerPensionContribution + employerNiPassback;
+  const {
+    amount: aaBase,
+    taperThreshold: aaTaper,
+    taperRate: aaRate,
+    minimumAllowance: aaMin,
+  } = rules.pensionAnnualAllowance;
+  let annualAllowance = aaBase;
+  let aaTapered = false;
+  if (aaAdjustedIncome > aaTaper) {
+    const reduction = Math.floor((aaAdjustedIncome - aaTaper) * aaRate);
+    annualAllowance = Math.max(aaMin, aaBase - reduction);
+    aaTapered = annualAllowance < aaBase;
+  }
+  const aaExcess = Math.max(0, totalPensionContributions - annualAllowance);
+
   return {
     grossSalary,
     bonus,
@@ -648,11 +679,7 @@ export function calculateTax(
     employerPensionContribution,
     employerNiSaving,
     employerNiPassback,
-    totalPensionContributions:
-      pensionContribution +
-      employerPensionContribution +
-      employerNiPassback +
-      sippContribution,
+    totalPensionContributions,
     sippContribution,
     niableIncome,
     adjustedNetIncome,
@@ -668,6 +695,12 @@ export function calculateTax(
     postgraduateLoanRepayment,
     studentLoanRepayment,
     sippRelief,
+    pensionAnnualAllowance: {
+      allowance: annualAllowance,
+      tapered: aaTapered,
+      totalContributions: totalPensionContributions,
+      excess: aaExcess,
+    },
     childBenefit,
     totalDeductions,
     netAnnualPay,

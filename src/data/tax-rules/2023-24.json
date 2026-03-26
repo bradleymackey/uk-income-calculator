@@ -44,6 +44,12 @@
       ]
     }
   },
+  "pensionAnnualAllowance": {
+    "amount": 60000,
+    "taperThreshold": 260000,
+    "taperRate": 0.5,
+    "minimumAllowance": 10000
+  },
   "selfEmployment": {
     "tradingAllowance": 1000,
     "vatThreshold": 85000,

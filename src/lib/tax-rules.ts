@@ -76,6 +76,12 @@ export interface TaxRules {
     vatThreshold: number;
     vatRate: number;
   };
+  pensionAnnualAllowance: {
+    amount: number;
+    taperThreshold: number;
+    taperRate: number;
+    minimumAllowance: number;
+  };
   childBenefit: ChildBenefitRules;
   studentLoans: Record<string, StudentLoanPlan>;
 }
