@@ -4,7 +4,9 @@ interface InputFieldProps {
   label: string;
   value: number | string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   type?: 'number' | 'text';
+  inputMode?: 'numeric' | 'decimal' | 'text';
   prefix?: string;
   suffix?: string;
   tooltip?: string;
@@ -16,7 +18,9 @@ export function InputField({
   label,
   value,
   onChange,
+  onBlur,
   type = 'number',
+  inputMode,
   prefix,
   suffix,
   tooltip,
@@ -51,8 +55,10 @@ export function InputField({
         )}
         <input
           type={type}
+          inputMode={inputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           min={min}
           step={step}
           className={`block w-full rounded-md border border-neutral-300 bg-white py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 ${

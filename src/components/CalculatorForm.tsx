@@ -426,17 +426,24 @@ export function CalculatorForm({
                   <>
                     <InputField
                       label="Vesting periods per year"
+                      type="text"
+                      inputMode="numeric"
                       value={input.rsuVestingPeriodsPerYear || ''}
-                      onChange={(v) =>
+                      onChange={(v) => {
+                        const digits = v.replace(/\D/g, '');
+                        update({
+                          rsuVestingPeriodsPerYear:
+                            digits === '' ? (0 as never) : parseInt(digits),
+                        });
+                      }}
+                      onBlur={() =>
                         update({
                           rsuVestingPeriodsPerYear: Math.min(
                             12,
-                            Math.max(1, parseInt(v) || 4),
+                            Math.max(1, input.rsuVestingPeriodsPerYear || 4),
                           ),
                         })
                       }
-                      step="1"
-                      min={1}
                       tooltip="How many times per year your RSUs vest (e.g. 4 for quarterly, 12 for monthly). Affects how the tax burden is spread across your payslips."
                     />
                     <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
