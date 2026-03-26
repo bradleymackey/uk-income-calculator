@@ -333,6 +333,10 @@ function HomePage() {
           stored or sent anywhere unless you share your URL.
         </p>
         <p className="mt-1">
+          This calculator is not certified by HMRC or any accountant. Use at
+          your own risk.
+        </p>
+        <p className="mt-1">
           An experiment by{' '}
           <a
             href="https://mcky.dev"
