@@ -5,8 +5,11 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import { nitro } from 'nitro/vite';
 import { resolve } from 'path';
 
+const baseURL = '/tools/tax/';
+
 export default defineConfig({
-  plugins: [tailwindcss(), tanstackStart(), nitro(), react()],
+  base: baseURL,
+  plugins: [tailwindcss(), tanstackStart(), nitro({ baseURL }), react()],
   resolve: {
     alias: {
       '~': resolve(__dirname, './src'),
